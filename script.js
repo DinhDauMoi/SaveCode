@@ -2,35 +2,76 @@
 const API_URL =
   "https://script.google.com/macros/s/AKfycbxPagSUbCD-_Rfwvy8_pT33xgHkw7ythkH9f7ae_3mVJlnrAccUnzH-DqC4_onGm94j/exec";
 
-const SEEN_KEY = "seenCodesV2";
+const LEGACY_SEEN_KEY = "seenCodesV2"; // key cu (global)
+const SHEET_SEEN_PREFIX = "seenCodesBySheet::"; // key moi (theo sheet)
+const LAST_SHEET_KEY = "lastSheetName";
+const DEFAULT_SHEET_NAME = "DEFAULT";
+
 let buffer = []; // luu tam cac ma chua gui
 let isSyncing = false; // trang thai dong bo
-const seenCodes = (() => {
-  const safeParse = (key) => {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(key) || "[]");
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  };
+let currentSheetName = localStorage.getItem(LAST_SHEET_KEY) || "";
+let seenCodes = new Set(); // luu cac ma da them de tranh trung lap
 
-  const merged = new Set(
-    safeParse(SEEN_KEY)
-      .map((c) => String(c).trim().toUpperCase())
-      .filter(Boolean)
+const safeParseList = (key) => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const getSheetStorageKey = (sheetName) =>
+  `${SHEET_SEEN_PREFIX}${(sheetName || DEFAULT_SHEET_NAME).toUpperCase()}`;
+
+const loadSeenCodesForSheet = (sheetName) =>
+  safeParseList(getSheetStorageKey(sheetName))
+    .map((c) => String(c).trim().toUpperCase())
+    .filter(Boolean);
+
+const persistSeenCodesForSheet = (sheetName, codesSet) => {
+  localStorage.setItem(
+    getSheetStorageKey(sheetName),
+    JSON.stringify([...codesSet])
   );
+};
 
-  // Xoa du lieu cu de tranh gay nham lan/bao trung sai
+// Di chuyen du lieu da luu (global) sang theo tung sheet neu co
+const migrateLegacySeenCodes = (sheetName) => {
+  const legacy = safeParseList(LEGACY_SEEN_KEY);
+  if (!legacy.length) return;
+
+  const sheetKey = getSheetStorageKey(sheetName);
+  if (!localStorage.getItem(sheetKey)) {
+    localStorage.setItem(sheetKey, JSON.stringify(legacy));
+  }
+
   localStorage.removeItem("seenTRHO");
   localStorage.removeItem("seenCodes");
-  return merged;
-})(); // luu cac ma da them de tranh trung lap
+  localStorage.removeItem(LEGACY_SEEN_KEY);
+};
+
+const getActiveSheetName = () =>
+  (currentSheetName || DEFAULT_SHEET_NAME).trim() || DEFAULT_SHEET_NAME;
+
+const setActiveSheet = (name) => {
+  currentSheetName = (name || DEFAULT_SHEET_NAME).trim() || DEFAULT_SHEET_NAME;
+  localStorage.setItem(LAST_SHEET_KEY, currentSheetName);
+
+  migrateLegacySeenCodes(currentSheetName);
+  seenCodes = new Set(loadSeenCodesForSheet(currentSheetName));
+
+  const currentSheetLabel = document.getElementById("currentSheet");
+  if (currentSheetLabel) currentSheetLabel.textContent = currentSheetName;
+
+  // Cap nhat danh sach ma can tim theo sheet moi
+  updateTargetHighlights();
+};
 
 const rememberCode = (code) => {
   const upper = code.toUpperCase();
   seenCodes.add(upper);
-  localStorage.setItem(SEEN_KEY, JSON.stringify([...seenCodes]));
+  persistSeenCodesForSheet(getActiveSheetName(), seenCodes);
 };
 
 const escapeHtml = (str) =>
@@ -107,9 +148,8 @@ const initTargetInput = () => {
 function updateCurrentSheet() {
   fetch(`${API_URL}?action=getCurrentSheet`)
     .then((res) => res.text())
-    .then(
-      (name) => (document.getElementById("currentSheet").textContent = name)
-    );
+    .then((name) => setActiveSheet(name))
+    .catch(() => setActiveSheet(getActiveSheetName()));
 }
 
 // Them ma vao bo nho tam
@@ -171,6 +211,9 @@ setInterval(async () => {
 
 // Nhan Enter de them vao buffer
 document.addEventListener("DOMContentLoaded", () => {
+  // Khoi tao context theo sheet da luu truoc (neu co)
+  setActiveSheet(currentSheetName || DEFAULT_SHEET_NAME);
+
   const input = document.getElementById("maDon");
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
@@ -190,6 +233,8 @@ function createNewSheet() {
     .then((res) => res.text())
     .then((msg) => {
       document.getElementById("message").textContent = msg;
+      buffer = []; // don buffer de tranh gui nham sheet
+      setActiveSheet(name); // chuyen context sang sheet moi (cho phep nhap lai ma cu)
       updateCurrentSheet();
     })
     .catch((err) => alert("Có Lỗi: " + err));
