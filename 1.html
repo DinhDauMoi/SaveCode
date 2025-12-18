@@ -1,0 +1,85 @@
+<html>
+    <head>
+      <meta charset="utf-8" />
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          margin: 40px;
+         
+        }
+        .header {
+          text-align: center;
+          margin-bottom: 20px;
+        }
+        .header img {
+          width: 100px;
+          height: auto;
+          margin-bottom: 5px;
+        }
+        .header h3 {
+          margin: 5px 0;
+        }
+        .tables {
+          display: flex;
+          justify-content: center;
+          gap: 20px;
+          text-align: center;
+        }
+        table.data {
+          border-collapse: collapse;
+          width: 48%;
+          font-size: 12px;
+        }
+        th, td {
+          border: 1px solid #333;
+          padding: 5px;
+          text-align: center;
+        }
+        .footer {
+          margin-top: 50px;
+          display: flex;
+          justify-content: space-around;
+          font-weight: bold;
+        }
+        h2 {
+          margin-top: 10px;
+          margin-bottom: 10px;
+        }
+        .textr{
+            padding-top: 10px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div style="display:flex;text-align: center;justify-content: center;">
+          <div>
+            <img src="https://static.ybox.vn/2019/5/3/1557280686880-8863079ccec42c9a75d5.jpg" style="padding-right: 20px;width: 150px;" alt="Logo">
+          </div>
+          <div>
+            <h3>CÔNG TY CỔ PHẦN DƯỢC PHẨM FPT LONG CHÂU</h3>
+            <div>Địa chỉ: 379-381 Hai Bà Trưng, P.3, Q.3, TP HCM</div>
+            <div class="textr">MST: 0315275368</div>
+          </div>
+        </div>
+        <h2>BIÊN BẢN BÀN GIAO HÀNG</h2>
+        <div class="textr">Hôm nay, .............. tháng .............. năm .............. tại Kho Tổng Long Châu.</div>
+        <div class="textr">Bên giao hàng ..............................................................................................</div>
+        <div class="textr"> - Ông (bà) ...................................................................................................</div>
+        <div class="textr">Bên giao hàng ..............................................................................................</div>
+        <div class="textr"> - Ông (bà) ...................................................................................................</div>
+        <div class="textr" style="text-align: left;">Cùng nhau kiểm kê hàng hóa bị hư hỏng do vận chuyển như sau :</div>
+      </div>
+
+      <div class="tables">
+        ${colHTML(col1)}
+        ${col2.length > 1 ? colHTML(col2) : ""}
+      </div>
+      <div class="textr">Biên bản này được lập thành 02 bản và có giá trị pháp lý như nhau, 01 bản lưu tại bên nhận, 01 bản đưa bên vận chuyển.</div>
+      <div class="footer">
+        
+        <div>BÊN GIAO HÀNG</div>
+        <div>BÊN NHẬN HÀNG</div>
+      </div>
+    </body>
+  </html>`;

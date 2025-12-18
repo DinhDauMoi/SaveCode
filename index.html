@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Quản Lý Chứng Từ</title>
+    <link rel="icon" href="icon.jpg" type="image/png">
+    <style>
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: #f0f2f5;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 30px;
+      }
+      .container {
+        background: #fff;
+        padding: 30px 25px;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        width: 400px;
+        text-align: center;
+        transition: 0.2s;
+      }
+      .container:hover {
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+      }
+      h2 {
+        margin-bottom: 12px;
+        color: #222;
+      }
+      input,
+      button {
+        width: 90%;
+        font-size: 16px;
+        padding: 10px;
+        margin: 8px 0;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        outline: none;
+      }
+      input:focus {
+        border-color: #007bff;
+      }
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background 0.2s;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      button{
+        width: 95% !important;
+      }
+      textarea {
+        width: 90%;
+        font-size: 14px;
+        padding: 10px;
+        margin: 8px 0;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        resize: vertical;
+        outline: none;
+      }
+      label {
+        display: block;
+        width: 90%;
+        margin: 4px auto 2px;
+        text-align: left;
+        font-size: 14px;
+        color: #444;
+      }
+      .targets-display {
+        width: 90%;
+        margin: 4px auto 0;
+        text-align: left;
+        font-size: 14px;
+        line-height: 1.4;
+      }
+      .target-hit {
+        color: #d32f2f;
+        font-weight: 700;
+      }
+      hr {
+        margin: 18px 0;
+        border: none;
+        border-top: 1px solid #eee;
+      }
+      #message {
+        margin-top: 15px;
+        color: green;
+        font-weight: bold;
+        min-height: 24px;
+      }
+      #currentSheet {
+        font-weight: bold;
+        color: #007bff;
+      }
+      footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        text-align: center;
+        padding: 2px;
+        background: #f0f0f0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>📋 Lưu Trữ Số Chứng Từ</h2>
+      <p>Sheet hiện tại: <span id="currentSheet">Đang tải...</span></p>
+
+      <input
+        type="text"
+        id="maDon"
+        placeholder="Nhập mã đơn hoặc quét barcode"
+        autofocus
+      />
+      <button onclick="saveMaDon()">💾 Lưu mã</button>
+
+      <hr />
+
+      <div id="targetWrapper">
+        <button type="button" id="toggleTargetInput">Nhập mã cần tìm</button>
+        <div id="targetContainer" style="display: none">
+          <label for="targetsInput"></label>
+          <textarea
+            id="targetsInput"
+            rows="4"
+            placeholder="Nhập mã cần tìm ..."
+          ></textarea>
+          <div id="targetsDisplay" class="targets-display"></div>
+        </div>
+      </div>
+
+      <hr />
+
+      <input type="text" id="newSheetName" placeholder="Tên sheet mới" />
+      <button onclick="createNewSheet()">🧾 Tạo & chọn sheet mới</button>
+
+      <hr />
+
+      <input
+        type="text"
+        id="sheetToExport"
+        placeholder="Tên sheet cần xuất PDF"
+      />
+      <button onclick="exportPDF()">📄 Xuất PDF</button>
+
+      <p id="message"></p>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+  <footer>© 2025 Dinh Dau Moi</footer>
+</html>
