@@ -108,6 +108,45 @@
         padding: 2px;
         background: #f0f0f0;
       }
+      /* Progress bar */
+      #progressWrapper {
+        display: none;
+        width: 90%;
+        margin: 12px auto 0;
+        background: #e9ecef;
+        border-radius: 10px;
+        overflow: hidden;
+        height: 22px;
+        position: relative;
+      }
+      #progressBar {
+        height: 100%;
+        width: 0%;
+        border-radius: 10px;
+        background: linear-gradient(90deg, #007bff, #00c6ff, #007bff);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite linear;
+        transition: width 0.4s ease;
+      }
+      #progressText {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        color: #fff;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        pointer-events: none;
+      }
+      @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
     </style>
   </head>
   <body>
@@ -126,16 +165,13 @@
       <hr />
 
       <div id="targetWrapper">
-        <button type="button" id="toggleTargetInput">Nhập mã cần tìm</button>
-        <div id="targetContainer" style="display: none">
-          <label for="targetsInput"></label>
-          <textarea
-            id="targetsInput"
-            rows="4"
-            placeholder="Nhập mã cần tìm ..."
-          ></textarea>
-          <div id="targetsDisplay" class="targets-display"></div>
-        </div>
+        <label for="targetsInput" style="font-weight: 600; font-size: 15px; color: #222;">🔍 Nhập mã cần tìm</label>
+        <textarea
+          id="targetsInput"
+          rows="4"
+          placeholder="Nhập mã cần tìm ..."
+        ></textarea>
+        <div id="targetsDisplay" class="targets-display"></div>
       </div>
 
       <hr />
@@ -150,7 +186,12 @@
         id="sheetToExport"
         placeholder="Tên sheet cần xuất PDF"
       />
-      <button onclick="exportPDF()">📄 Xuất PDF</button>
+      <button id="btnExportPDF" onclick="exportPDF()">📄 Xuất PDF</button>
+
+      <div id="progressWrapper">
+        <div id="progressBar"></div>
+        <div id="progressText">0%</div>
+      </div>
 
       <p id="message"></p>
     </div>

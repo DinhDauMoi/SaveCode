@@ -1,195 +1,39 @@
-// Duong dan Web App
+// ⚙️ Dán URL Web App của bạn tại đây
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbxPagSUbCD-_Rfwvy8_pT33xgHkw7ythkH9f7ae_3mVJlnrAccUnzH-DqC4_onGm94j/exec";
+  "https://script.google.com/macros/s/AKfycbw1Qxm2KE8Mo9Kk8k-u5z6c79QOZ0S-ye5fCD0wnznm2hYVhozkUbgoxHdks0puBo79/exec";
 
-const LEGACY_SEEN_KEY = "seenCodesV2"; // key cu (global)
-const SHEET_SEEN_PREFIX = "seenCodesBySheet::"; // key moi (theo sheet)
-const LAST_SHEET_KEY = "lastSheetName";
-const DEFAULT_SHEET_NAME = "DEFAULT";
-
-let buffer = []; // luu tam cac ma chua gui
-let isSyncing = false; // trang thai dong bo
-let currentSheetName = localStorage.getItem(LAST_SHEET_KEY) || "";
-let seenCodes = new Set(); // luu cac ma da them de tranh trung lap
-
-const safeParseList = (key) => {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(key) || "[]");
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-};
-
-const getSheetStorageKey = (sheetName) =>
-  `${SHEET_SEEN_PREFIX}${(sheetName || DEFAULT_SHEET_NAME).toUpperCase()}`;
-
-const loadSeenCodesForSheet = (sheetName) =>
-  safeParseList(getSheetStorageKey(sheetName))
-    .map((c) => String(c).trim().toUpperCase())
-    .filter(Boolean);
-
-const persistSeenCodesForSheet = (sheetName, codesSet) => {
-  localStorage.setItem(
-    getSheetStorageKey(sheetName),
-    JSON.stringify([...codesSet])
-  );
-};
-
-// Di chuyen du lieu da luu (global) sang theo tung sheet neu co
-const migrateLegacySeenCodes = (sheetName) => {
-  const legacy = safeParseList(LEGACY_SEEN_KEY);
-  if (!legacy.length) return;
-
-  const sheetKey = getSheetStorageKey(sheetName);
-  if (!localStorage.getItem(sheetKey)) {
-    localStorage.setItem(sheetKey, JSON.stringify(legacy));
-  }
-
-  localStorage.removeItem("seenTRHO");
-  localStorage.removeItem("seenCodes");
-  localStorage.removeItem(LEGACY_SEEN_KEY);
-};
-
-const getActiveSheetName = () =>
-  (currentSheetName || DEFAULT_SHEET_NAME).trim() || DEFAULT_SHEET_NAME;
-
-const setActiveSheet = (name) => {
-  currentSheetName = (name || DEFAULT_SHEET_NAME).trim() || DEFAULT_SHEET_NAME;
-  localStorage.setItem(LAST_SHEET_KEY, currentSheetName);
-
-  migrateLegacySeenCodes(currentSheetName);
-  seenCodes = new Set(loadSeenCodesForSheet(currentSheetName));
-
-  const currentSheetLabel = document.getElementById("currentSheet");
-  if (currentSheetLabel) currentSheetLabel.textContent = currentSheetName;
-
-  // Cap nhat danh sach ma can tim theo sheet moi
-  updateTargetHighlights();
-};
-
-const rememberCode = (code) => {
-  const upper = code.toUpperCase();
-  seenCodes.add(upper);
-  persistSeenCodesForSheet(getActiveSheetName(), seenCodes);
-};
-
-const escapeHtml = (str) =>
-  String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-
-// Xu ly danh sach ma can tim (co the an/hien)
-const parseTargetCodes = () => {
-  const textarea = document.getElementById("targetsInput");
-  if (!textarea) return [];
-  return textarea.value
-    .split(/\n+/)
-    .map((c) => c.trim().toUpperCase())
-    .filter(Boolean);
-};
-
-const renderTargetCodes = (matchedSet = new Set()) => {
-  const codes = parseTargetCodes();
-  const display = document.getElementById("targetsDisplay");
-  if (!display) return codes;
-  display.innerHTML = codes
-    .map((code) => {
-      const isHit = matchedSet.has(code);
-      return `<div class="${isHit ? "target-hit" : ""}">${escapeHtml(code)}</div>`;
-    })
-    .join("");
-  return codes;
-};
-
-const showTargetContainer = (forceVisible) => {
-  const container = document.getElementById("targetContainer");
-  const toggleBtn = document.getElementById("toggleTargetInput");
-  if (!container || !toggleBtn) return;
-
-  const shouldShow =
-    typeof forceVisible === "boolean"
-      ? forceVisible
-      : container.style.display === "none";
-
-  container.style.display = shouldShow ? "block" : "none";
-  toggleBtn.textContent = shouldShow ? "Ẩn ô tìm kiếm" : "Hiện ô tìm kiếm";
-};
-
-const getMatchedTargets = () => {
-  const matched = new Set();
-  parseTargetCodes().forEach((code) => {
-    if (seenCodes.has(code)) matched.add(code);
-  });
-  return matched;
-};
-
-const updateTargetHighlights = () => {
-  const matched = getMatchedTargets();
-  renderTargetCodes(matched);
-  if (matched.size) showTargetContainer(true);
-};
-
-const initTargetInput = () => {
-  const textarea = document.getElementById("targetsInput");
-  const toggleBtn = document.getElementById("toggleTargetInput");
-  const container = document.getElementById("targetContainer");
-  if (!textarea || !toggleBtn || !container) return;
-
-  container.style.display = container.style.display || "none"; // an mac dinh
-  toggleBtn.addEventListener("click", () => showTargetContainer());
-  textarea.addEventListener("input", () => updateTargetHighlights());
-  updateTargetHighlights();
-};
+let buffer = []; // lưu tạm các mã chưa gửi
+let isSyncing = false; // trạng thái đang đồng bộ
 
 function updateCurrentSheet() {
   fetch(`${API_URL}?action=getCurrentSheet`)
     .then((res) => res.text())
-    .then((name) => setActiveSheet(name))
-    .catch(() => setActiveSheet(getActiveSheetName()));
+    .then(
+      (name) => (document.getElementById("currentSheet").textContent = name)
+    );
 }
 
-// Them ma vao bo nho tam
+// ✅ Thêm mã vào bộ nhớ tạm
 function saveMaDon() {
   const input = document.getElementById("maDon");
   const maDon = input.value.trim();
   if (!maDon) return;
-
-  const upper = maDon.toUpperCase();
-  if (seenCodes.has(upper)) {
-    document.getElementById("message").textContent = `Trùng Mã: ${maDon} -> Không Lưu`;
-    input.value = "";
-    input.focus();
-    return;
-  }
-
-  rememberCode(upper);
 
   buffer.push(maDon);
   input.value = "";
   input.focus();
   document.getElementById(
     "message"
-  ).textContent = `Đã Thêm: ${maDon} (${buffer.length} Chưa Gửi)`;
-
-  // Chi to mau/ hien o target, khong chan viec them
-  try {
-    updateTargetHighlights();
-  } catch (err) {
-    console.warn("Target highlight error:", err);
-  }
+  ).textContent = `📥 Đã thêm tạm: ${maDon} (${buffer.length} mã chờ lưu)`;
 }
 
-// Tu dong gui du lieu 2s/lần
+// 🔁 Tự động gửi dữ liệu nền mỗi 2 giây
 setInterval(async () => {
   if (isSyncing || buffer.length === 0) return;
   isSyncing = true;
 
   const batch = [...buffer];
-  buffer = []; // lam rong truoc
+  buffer = []; // tạm làm rỗng trước
 
   try {
     const res = await fetch(`${API_URL}?action=batchSave`, {
@@ -197,23 +41,19 @@ setInterval(async () => {
       body: JSON.stringify(batch),
     });
     const msg = await res.text();
-    document.getElementById("message").textContent = `Info: ${msg}`;
+    document.getElementById("message").textContent = `✅ ${msg}`;
   } catch (err) {
-    // Neu loi, phuc hoi buffer
+    // nếu lỗi, khôi phục buffer
     localStorage.setItem("buffer", JSON.stringify(buffer));
     buffer = [...batch, ...buffer];
-    document.getElementById("message").textContent =
-      "Mạng Chậm, Thử Lại...";
+    document.getElementById("message").textContent = "⚠️ Mạng chậm, thử lại...";
   } finally {
     isSyncing = false;
   }
 }, 2000);
 
-// Nhan Enter de them vao buffer
+// ---- Nhấn Enter thì thêm vào buffer ----
 document.addEventListener("DOMContentLoaded", () => {
-  // Khoi tao context theo sheet da luu truoc (neu co)
-  setActiveSheet(currentSheetName || DEFAULT_SHEET_NAME);
-
   const input = document.getElementById("maDon");
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
@@ -221,40 +61,83 @@ document.addEventListener("DOMContentLoaded", () => {
       saveMaDon();
     }
   });
-  initTargetInput();
   updateCurrentSheet();
 });
 
-// Tao sheet moi
+// 🧾 Tạo sheet mới
 function createNewSheet() {
   const name = document.getElementById("newSheetName").value.trim();
-  if (!name) return alert("Nhập Tên Sheet Cần Tạo!");
+  if (!name) return alert("Nhập tên sheet cần tạo!");
   fetch(`${API_URL}?action=newSheet&name=${encodeURIComponent(name)}`)
     .then((res) => res.text())
     .then((msg) => {
       document.getElementById("message").textContent = msg;
-      buffer = []; // don buffer de tranh gui nham sheet
-      setActiveSheet(name); // chuyen context sang sheet moi (cho phep nhap lai ma cu)
       updateCurrentSheet();
     })
-    .catch((err) => alert("Có Lỗi: " + err));
+    .catch((err) => alert("❌ Lỗi: " + err));
 }
 
-// Xuat PDF
+// 📄 Xuất PDF (có progress bar)
 function exportPDF() {
   const sheetName = document.getElementById("sheetToExport").value.trim();
-  if (!sheetName) return alert("Nhập Tên Sheet Cần Xuất PDF!");
+  if (!sheetName) return alert("Nhập tên sheet cần xuất PDF!");
+
+  const btn = document.getElementById("btnExportPDF");
+  const wrapper = document.getElementById("progressWrapper");
+  const bar = document.getElementById("progressBar");
+  const text = document.getElementById("progressText");
+
+  // Hiển thị progress bar, disable nút
+  btn.disabled = true;
+  btn.textContent = "⏳ Đang xuất PDF...";
+  wrapper.style.display = "block";
+  bar.style.width = "0%";
+  text.textContent = "0%";
+  document.getElementById("message").textContent = "";
+
+  // Giả lập tiến trình tăng dần (0% → 90%)
+  let progress = 0;
+  const interval = setInterval(() => {
+    if (progress < 90) {
+      progress += Math.random() * 8 + 2; // tăng 2-10% mỗi lần
+      if (progress > 90) progress = 90;
+      bar.style.width = progress + "%";
+      text.textContent = Math.round(progress) + "%";
+    }
+  }, 500);
 
   fetch(
     `${API_URL}?action=exportPDF&sheetName=${encodeURIComponent(sheetName)}`
   )
     .then((res) => res.text())
     .then((url) => {
-      if (url.startsWith("https")) {
-        window.open(url, "_blank");
-      } else {
-        document.getElementById("message").textContent = url;
-      }
+      clearInterval(interval);
+      // Hoàn tất 100%
+      bar.style.width = "100%";
+      text.textContent = "100%";
+
+      setTimeout(() => {
+        if (url.startsWith("http")) {
+          window.open(url, "_blank");
+          document.getElementById("message").textContent = "✅ Xuất PDF thành công!";
+        } else {
+          document.getElementById("message").textContent = url;
+        }
+        // Ẩn progress bar sau 1.5s
+        setTimeout(() => {
+          wrapper.style.display = "none";
+          bar.style.width = "0%";
+          text.textContent = "0%";
+        }, 1500);
+        btn.disabled = false;
+        btn.textContent = "📄 Xuất PDF";
+      }, 600);
     })
-    .catch((err) => alert("Có Lỗi: " + err));
+    .catch((err) => {
+      clearInterval(interval);
+      wrapper.style.display = "none";
+      btn.disabled = false;
+      btn.textContent = "📄 Xuất PDF";
+      alert("❌ Lỗi: " + err);
+    });
 }
