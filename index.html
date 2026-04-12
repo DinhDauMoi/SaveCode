@@ -2,132 +2,285 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Quản Lý Chứng Từ</title>
-    <link rel="icon" href="icon.jpg" type="image/png">
+    <link rel="icon" href="icon.jpg" type="image/png" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+      :root {
+        --primary: #4f46e5;
+        --primary-hover: #4338ca;
+        --bg-color: #f3f4f6;
+        --card-bg: #ffffff;
+        --text-main: #111827;
+        --text-muted: #6b7280;
+        --border-color: #e5e7eb;
+        --success: #10b981;
+        --danger: #ef4444;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --radius: 16px;
+      }
+      
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
       body {
-        font-family: "Segoe UI", Arial, sans-serif;
-        background: #f0f2f5;
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        color: var(--text-main);
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 30px;
+        min-height: 100vh;
+        padding: 40px 20px;
       }
-      .container {
-        background: #fff;
-        padding: 30px 25px;
-        border-radius: 16px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        width: 400px;
+
+      .app-header {
         text-align: center;
-        transition: 0.2s;
+        margin-bottom: 40px;
+        animation: fadeInDown 0.5s ease-out;
       }
-      .container:hover {
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-      }
-      h2 {
+
+      .app-header h2 {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--text-main);
         margin-bottom: 12px;
-        color: #222;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        letter-spacing: -0.5px;
       }
-      input,
-      button {
-        width: 90%;
-        font-size: 16px;
-        padding: 10px;
-        margin: 8px 0;
-        border-radius: 8px;
-        border: 1px solid #ccc;
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 16px;
+        background: #e0e7ff;
+        color: var(--primary);
+        border-radius: 30px;
+        font-size: 14px;
+        font-weight: 600;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .dashboard {
+        max-width: 850px;
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        animation: fadeInUp 0.6s ease-out;
+      }
+
+      @media (max-width: 768px) {
+        .dashboard {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .card {
+        background: var(--card-bg);
+        border-radius: var(--radius);
+        padding: 28px;
+        box-shadow: var(--shadow-md);
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-lg);
+      }
+      
+      .card-header {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        color: var(--text-main);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 2px solid #f1f5f9;
+        padding-bottom: 12px;
+      }
+
+      .form-group {
+        margin-bottom: 16px;
+        flex: 1;
+      }
+
+      .form-group label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+      }
+
+      input[type="text"], textarea {
+        width: 100%;
+        padding: 14px 16px;
+        border-radius: 10px;
+        border: 1.5px solid var(--border-color);
+        font-family: 'Inter', sans-serif;
+        font-size: 15px;
+        background: #f8fafc;
+        color: var(--text-main);
+        transition: all 0.2s;
         outline: none;
       }
-      input:focus {
-        border-color: #007bff;
+
+      input[type="text"]:focus, textarea:focus {
+        border-color: var(--primary);
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
       }
+
       button {
-        background: #007bff;
+        width: 100%;
+        padding: 14px 20px;
+        background: var(--primary);
         color: white;
         border: none;
-        cursor: pointer;
+        border-radius: 10px;
+        font-size: 15px;
         font-weight: 600;
-        transition: background 0.2s;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
       }
+
       button:hover {
-        background: #0056b3;
+        background: var(--primary-hover);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 8px -1px rgba(79, 70, 229, 0.4);
       }
-      button{
-        width: 95% !important;
+
+      button:active {
+        transform: translateY(1px);
+        box-shadow: 0 2px 4px -1px rgba(79, 70, 229, 0.3);
       }
-      textarea {
-        width: 90%;
-        font-size: 14px;
-        padding: 10px;
-        margin: 8px 0;
-        border-radius: 8px;
-        border: 1px solid #ccc;
+
+      button:disabled {
+        background: #9ca3af;
+        box-shadow: none;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .btn-secondary {
+        background: #f1f5f9;
+        color: #334155;
+        border: 1px solid var(--border-color);
+        box-shadow: none;
+      }
+
+      .btn-secondary:hover {
+        background: #e2e8f0;
+        box-shadow: none;
+      }
+
+      /* Nhập liệu chính */
+      .primary-input-card {
+        grid-column: 1 / -1;
+        background: linear-gradient(145deg, #ffffff, #f8fafc);
+        border: 2px solid var(--primary);
+      }
+
+      .primary-input-card input {
+        font-size: 18px;
+        padding: 18px 20px;
+      }
+
+      .primary-input-card button {
+        font-size: 16px;
+      }
+
+      /* Tìm kiếm container */
+      .search-card textarea {
         resize: vertical;
-        outline: none;
+        min-height: 120px;
+        line-height: 1.5;
       }
-      label {
-        display: block;
-        width: 90%;
-        margin: 4px auto 2px;
-        text-align: left;
-        font-size: 14px;
-        color: #444;
-      }
+
       .targets-display {
-        width: 90%;
-        margin: 4px auto 0;
-        text-align: left;
+        margin-top: 12px;
         font-size: 14px;
-        line-height: 1.4;
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 16px;
+        border: 1.5px dashed var(--border-color);
+        min-height: 52px;
       }
-      .target-hit {
-        color: #d32f2f;
-        font-weight: 700;
-      }
-      hr {
-        margin: 18px 0;
-        border: none;
-        border-top: 1px solid #eee;
-      }
-      #message {
-        margin-top: 15px;
-        color: green;
-        font-weight: bold;
-        min-height: 24px;
-      }
-      #currentSheet {
-        font-weight: bold;
-        color: #007bff;
-      }
-      footer {
+
+      /* Message Notification */
+      #messageBox {
         position: fixed;
-        bottom: 0;
-        width: 100%;
-        text-align: center;
-        padding: 2px;
-        background: #f0f0f0;
+        bottom: 30px;
+        right: 30px;
+        background: white;
+        padding: 18px 24px;
+        border-radius: 12px;
+        box-shadow: var(--shadow-lg);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        transform: translateY(150%);
+        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        z-index: 50;
+        border-left: 5px solid var(--success);
       }
-      /* Progress bar */
+
+      #messageBox.show {
+        transform: translateY(0);
+      }
+
+      #messageBox.error {
+        border-left-color: var(--danger);
+      }
+
+      #messageText {
+        font-weight: 600;
+        font-size: 15px;
+        color: var(--text-main);
+      }
+
+      /* Progress Bar */
       #progressWrapper {
         display: none;
-        width: 90%;
-        margin: 12px auto 0;
-        background: #e9ecef;
-        border-radius: 10px;
+        width: 100%;
+        margin-top: 20px;
+        background: #f1f5f9;
+        border-radius: 999px;
         overflow: hidden;
-        height: 22px;
+        height: 24px;
         position: relative;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
       }
+      
       #progressBar {
         height: 100%;
         width: 0%;
-        border-radius: 10px;
-        background: linear-gradient(90deg, #007bff, #00c6ff, #007bff);
+        border-radius: 999px;
+        background: linear-gradient(90deg, #4f46e5, #0ea5e9, #4f46e5);
         background-size: 200% 100%;
         animation: shimmer 1.5s infinite linear;
         transition: width 0.4s ease;
       }
+      
       #progressText {
         position: absolute;
         top: 0;
@@ -143,60 +296,215 @@
         text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         pointer-events: none;
       }
+
+      footer {
+        margin-top: 40px;
+        padding: 24px 0;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      /* Animations */
       @keyframes shimmer {
         0% { background-position: 200% 0; }
         100% { background-position: -200% 0; }
       }
+
+      @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-30px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      /* Icons */
+      .icon {
+        width: 22px;
+        height: 22px;
+      }
     </style>
   </head>
   <body>
-    <div class="container">
-      <h2>📋 Lưu Trữ Số Chứng Từ</h2>
-      <p>Sheet hiện tại: <span id="currentSheet">Đang tải...</span></p>
+    
+    <div class="app-header">
+      <h2>
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 36px; height: 36px; color: var(--primary)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        Lưu Trữ Số Chứng Từ
+      </h2>
+      <div class="status-badge">
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px; width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+        Bản ghi hiện tại: <span id="currentSheet" style="margin-left: 6px; font-weight: 800;">Đang tải...</span>
+      </div>
+    </div>
 
-      <input
-        type="text"
-        id="maDon"
-        placeholder="Nhập mã đơn hoặc quét barcode"
-        autofocus
-      />
-      <button onclick="saveMaDon()">💾 Lưu mã</button>
-
-      <hr />
-
-      <div id="targetWrapper">
-        <label for="targetsInput" style="font-weight: 600; font-size: 15px; color: #222;">🔍 Nhập mã cần tìm</label>
-        <textarea
-          id="targetsInput"
-          rows="4"
-          placeholder="Nhập mã cần tìm ..."
-        ></textarea>
-        <div id="targetsDisplay" class="targets-display"></div>
+    <div class="dashboard">
+      
+      <!-- Card: Lưu Mã -->
+      <div class="card primary-input-card">
+        <div class="card-header" style="border-bottom: none; margin-bottom: 12px;">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+          Thêm Mới Mã Hoặc Quét Barcode
+        </div>
+        <div class="form-group" style="display: flex; gap: 16px; margin-bottom: 0;">
+          <input
+            type="text"
+            id="maDon"
+            placeholder="Nhập mã đơn hoặc quét tại đây..."
+            autofocus
+            style="flex: 1;"
+          />
+          <button onclick="saveMaDon()" style="width: 140px;">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+            Lưu Mã
+          </button>
+        </div>
       </div>
 
-      <hr />
-
-      <input type="text" id="newSheetName" placeholder="Tên sheet mới" />
-      <button onclick="createNewSheet()">🧾 Tạo & chọn sheet mới</button>
-
-      <hr />
-
-      <input
-        type="text"
-        id="sheetToExport"
-        placeholder="Tên sheet cần xuất PDF"
-      />
-      <button id="btnExportPDF" onclick="exportPDF()">📄 Xuất PDF</button>
-
-      <div id="progressWrapper">
-        <div id="progressBar"></div>
-        <div id="progressText">0%</div>
+      <!-- Card: Tìm Kiểm -->
+      <div class="card search-card">
+        <div class="card-header">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          Kiểm Tra Mã
+        </div>
+        <div class="form-group">
+          <label for="targetsInput">Dán các danh sách cần tra cứu vào đây:</label>
+          <textarea
+            id="targetsInput"
+            rows="4"
+            placeholder="Mỗi mã 1 dòng..."
+          ></textarea>
+        </div>
+        <div id="targetsDisplay" class="targets-display" style="display:none;"></div>
       </div>
 
-      <p id="message"></p>
+      <!-- Card: Quản Lý Cấu Hình -->
+      <div class="card">
+        <div class="card-header">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          Chức Năng & Xuất Dữ Liệu
+        </div>
+        
+        <div class="form-group">
+          <label>Tạo bản ghi mới</label>
+          <div style="display: flex; gap: 12px;">
+            <input type="text" id="newSheetName" placeholder="Nhập tên..." />
+            <button onclick="createNewSheet()" class="btn-secondary" style="width: 100px;">Tạo</button>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 8px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+          <label>Xuất Dữ Liệu PDF</label>
+          <div style="display: flex; gap: 12px;">
+            <input type="text" id="sheetToExport" placeholder="Tên bản ghi..." />
+            <button id="btnExportPDF" onclick="exportPDF()" style="width: 100px;">
+              <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+              Xuất
+            </button>
+          </div>
+          
+          <div id="progressWrapper">
+            <div id="progressBar"></div>
+            <div id="progressText">0%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card: Cảnh báo định dạng lạ -->
+      <div class="card" style="grid-column: 1 / -1; border: 1px solid #fde68a;">
+        <div class="card-header" style="color: #b45309; border-bottom-color: #fef3c7;">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          Mã Sai Cấu Trúc / Bất Thường
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label>Cảnh báo: Tự động bắt các mã khác <strong>FRK...</strong> và <strong>TR80001...</strong> (các mã này vẫn được lưu):</label>
+          <textarea
+            id="unusualCodes"
+            rows="3"
+            readonly
+            style="background: #fffbeb; border-color: #fcd34d; color: #92400e; font-family: monospace; font-size: 15px;"
+            placeholder="Các mã có định dạng bị lệch ngoài 2 định dạng trên sẽ được liệt kê ở đây..."
+          ></textarea>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Toast Notification (Replaces old text message) -->
+    <div id="messageBox">
+      <svg id="messageIconSuccess" class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--success)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+      <svg id="messageIconError" class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--danger); display: none;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <span id="messageText">Khởi động hoàn tất</span>
+      
+      <!-- Hidden original message div to preserve js compatibility -->
+      <div id="message" style="display:none;"></div>
     </div>
 
     <script src="script.js"></script>
+
+    <script>
+      // Enhance script.js compatibility by intercepting changes to #message
+      const messageNode = document.getElementById('message');
+      
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'childList') {
+            const text = messageNode.textContent;
+            if(!text) return;
+
+            showToast(text);
+          }
+        });
+      });
+      observer.observe(messageNode, { childList: true });
+
+      function showToast(text) {
+        const box = document.getElementById('messageBox');
+        const displayLabel = document.getElementById('messageText');
+        const sucIcon = document.getElementById('messageIconSuccess');
+        const errIcon = document.getElementById('messageIconError');
+        
+        displayLabel.textContent = text;
+        
+        if (text.includes('❌') || text.includes('⚠️')) {
+          box.classList.add('error');
+          sucIcon.style.display = 'none';
+          errIcon.style.display = 'block';
+        } else {
+          box.classList.remove('error');
+          sucIcon.style.display = 'block';
+          errIcon.style.display = 'none';
+        }
+
+        box.classList.add('show');
+        
+        clearTimeout(window.toastTimer);
+        window.toastTimer = setTimeout(() => {
+          box.classList.remove('show');
+        }, 4000);
+      }
+
+      // Add simple targetsInput real-time visual feedback
+      const targetsInput = document.getElementById('targetsInput');
+      const targetsDisplay = document.getElementById('targetsDisplay');
+      
+      targetsInput.addEventListener('input', function() {
+        const val = this.value.trim();
+        if(!val) {
+          targetsDisplay.style.display = 'none';
+          return;
+        }
+        targetsDisplay.style.display = 'block';
+        const lines = val.split('\n').filter(l => l.trim() !== '');
+        const pending = lines.filter(l => !l.includes('✅')).length;
+        const matched = lines.filter(l => l.includes('✅')).length;
+        targetsDisplay.innerHTML = `<strong style="color: var(--primary)">${pending}</strong> mã đang chờ đối chiếu / <strong style="color: var(--success)">${matched}</strong> đã tìm thấy.`;
+      });
+    </script>
   </body>
-  <footer>© 2025 Dinh Dau Moi</footer>
+  <footer>© 2026 Dinh Dau Moi Tracking System</footer>
 </html>

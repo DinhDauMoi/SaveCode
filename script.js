@@ -4,6 +4,26 @@ const API_URL =
 
 let buffer = []; // lưu tạm các mã chưa gửi
 let isSyncing = false; // trạng thái đang đồng bộ
+let scannedCodes = new Set(); // lưu trữ mã đã quét trong phiên để kiểm tra trùng lặp
+
+// Khôi phục mã đã quét từ localStorage để chống trùng ngay cả khi tải lại trang
+try {
+  const saved = JSON.parse(localStorage.getItem("scannedCodes"));
+  if (Array.isArray(saved)) {
+    scannedCodes = new Set(saved);
+  }
+} catch (e) {}
+
+// Cập nhật giao diện: hiển thị các mã lạ (không phải ký hiệu FRK... hoặc TR80001...)
+function updateUnusualCodesDisplay(code) {
+  const area = document.getElementById("unusualCodes");
+  if (!area) return;
+  const upper = code.toUpperCase();
+  if (!upper.startsWith("FRK") && !upper.startsWith("TR80001")) {
+    area.value = area.value ? area.value + "\n" + code : code;
+    area.scrollTop = area.scrollHeight;
+  }
+}
 
 function updateCurrentSheet() {
   fetch(`${API_URL}?action=getCurrentSheet`)
@@ -19,12 +39,49 @@ function saveMaDon() {
   const maDon = input.value.trim();
   if (!maDon) return;
 
+  // Lọc trùng: Kiểm tra xem mã đã được quét chưa
+  if (scannedCodes.has(maDon)) {
+    document.getElementById("message").textContent = `❌ Trùng lặp: Mã "${maDon}" đã được quét!`;
+    input.value = "";
+    input.focus();
+    return;
+  }
+
+  // ==== Tìm kiếm / Tra cứu mã ====
+  const targetArea = document.getElementById("targetsInput");
+  let isTargetFound = false;
+  if (targetArea && targetArea.value.trim() !== "") {
+    let lines = targetArea.value.split('\n');
+    let matched = false;
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].trim() === maDon) {
+        lines[i] = lines[i] + " ✅";
+        matched = true;
+        isTargetFound = true;
+      }
+    }
+    if (matched) {
+      targetArea.value = lines.join('\n');
+      targetArea.dispatchEvent(new Event('input')); // Update display count
+    }
+  }
+
+  // Thêm vào danh sách đã quét và lưu cục bộ
+  scannedCodes.add(maDon);
+  localStorage.setItem("scannedCodes", JSON.stringify([...scannedCodes]));
+
+  // Cảnh báo nếu mã định dạng lạ
+  updateUnusualCodesDisplay(maDon);
+
   buffer.push(maDon);
   input.value = "";
   input.focus();
-  document.getElementById(
-    "message"
-  ).textContent = `📥 Đã thêm tạm: ${maDon} (${buffer.length} mã chờ lưu)`;
+  
+  if (isTargetFound) {
+    document.getElementById("message").textContent = `🎯 TÌM THẤY MÃ TRA CỨU: ${maDon}`;
+  } else {
+    document.getElementById("message").textContent = `📥 Đã thêm tạm: ${maDon} (${buffer.length} mã chờ lưu)`;
+  }
 }
 
 // 🔁 Tự động gửi dữ liệu nền mỗi 2 giây
@@ -62,6 +119,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
   updateCurrentSheet();
+  
+  // Khôi phục danh sách mã lạ khi F5
+  scannedCodes.forEach(c => updateUnusualCodesDisplay(c));
 });
 
 // 🧾 Tạo sheet mới
@@ -72,6 +132,14 @@ function createNewSheet() {
     .then((res) => res.text())
     .then((msg) => {
       document.getElementById("message").textContent = msg;
+      
+      // Xoá dữ liệu mã quét tạm khi tạo trang mới để bắt đầu phiên mới
+      scannedCodes.clear();
+      localStorage.removeItem("scannedCodes");
+      
+      const area = document.getElementById("unusualCodes");
+      if (area) area.value = "";
+      
       updateCurrentSheet();
     })
     .catch((err) => alert("❌ Lỗi: " + err));
