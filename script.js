@@ -1,6 +1,6 @@
 // ⚙️ Dán URL Web App của bạn tại đây
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbw1Qxm2KE8Mo9Kk8k-u5z6c79QOZ0S-ye5fCD0wnznm2hYVhozkUbgoxHdks0puBo79/exec";
+  "https://script.google.com/macros/s/AKfycbyb9rBPg6N1AiXY0-5UCxHOZuWv8NUIKgmZoIXU8Or2Opann5416_L62eQQGL-dvngE/exec";
 
 let buffer = []; // lưu tạm các mã chưa gửi
 let isSyncing = false; // trạng thái đang đồng bộ
@@ -14,7 +14,7 @@ try {
   }
 } catch (e) {}
 
-// Cập nhật giao diện: hiển thị các mã lạ (không phải ký hiệu FRK... hoặc TR80001...)
+// Cập nhật giao diện: hiển thị các mã lạ
 function updateUnusualCodesDisplay(code) {
   const area = document.getElementById("unusualCodes");
   if (!area) return;
@@ -39,9 +39,9 @@ function saveMaDon() {
   const maDon = input.value.trim();
   if (!maDon) return;
 
-  // Lọc trùng: Kiểm tra xem mã đã được quét chưa
-  if (scannedCodes.has(maDon)) {
-    document.getElementById("message").textContent = `❌ Trùng lặp: Mã "${maDon}" đã được quét!`;
+  // Lọc trùng: Kiểm tra xem mã đã được quét chưa (trong phiên hoặc trong buffer chờ gửi)
+  if (scannedCodes.has(maDon) || buffer.includes(maDon)) {
+    document.getElementById("message").textContent = `❌ Trùng lặp: Mã "${maDon}" đã được quét! Không lưu.`;
     input.value = "";
     input.focus();
     return;

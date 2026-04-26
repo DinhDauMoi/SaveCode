@@ -4,448 +4,190 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Quản Lý Chứng Từ</title>
+    <meta name="description" content="Hệ thống lưu trữ và quản lý số chứng từ - Dinh Dau Moi" />
     <link rel="icon" href="icon.jpg" type="image/png" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-      :root {
-        --primary: #4f46e5;
-        --primary-hover: #4338ca;
-        --bg-color: #f3f4f6;
-        --card-bg: #ffffff;
-        --text-main: #111827;
-        --text-muted: #6b7280;
-        --border-color: #e5e7eb;
-        --success: #10b981;
-        --danger: #ef4444;
-        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        --radius: 16px;
-      }
-      
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
-
-      body {
-        font-family: 'Inter', sans-serif;
-        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-        color: var(--text-main);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        min-height: 100vh;
-        padding: 40px 20px;
-      }
-
-      .app-header {
-        text-align: center;
-        margin-bottom: 40px;
-        animation: fadeInDown 0.5s ease-out;
-      }
-
-      .app-header h2 {
-        font-size: 32px;
-        font-weight: 700;
-        color: var(--text-main);
-        margin-bottom: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        letter-spacing: -0.5px;
-      }
-
-      .status-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 8px 16px;
-        background: #e0e7ff;
-        color: var(--primary);
-        border-radius: 30px;
-        font-size: 14px;
-        font-weight: 600;
-        box-shadow: var(--shadow-sm);
-      }
-
-      .dashboard {
-        max-width: 850px;
-        width: 100%;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 24px;
-        animation: fadeInUp 0.6s ease-out;
-      }
-
-      @media (max-width: 768px) {
-        .dashboard {
-          grid-template-columns: 1fr;
-        }
-      }
-
-      .card {
-        background: var(--card-bg);
-        border-radius: var(--radius);
-        padding: 28px;
-        box-shadow: var(--shadow-md);
-        transition: transform 0.2s, box-shadow 0.2s;
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        display: flex;
-        flex-direction: column;
-      }
-
-      .card:hover {
-        transform: translateY(-3px);
-        box-shadow: var(--shadow-lg);
-      }
-      
-      .card-header {
-        font-size: 18px;
-        font-weight: 700;
-        margin-bottom: 20px;
-        color: var(--text-main);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        border-bottom: 2px solid #f1f5f9;
-        padding-bottom: 12px;
-      }
-
-      .form-group {
-        margin-bottom: 16px;
-        flex: 1;
-      }
-
-      .form-group label {
-        display: block;
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--text-muted);
-        margin-bottom: 8px;
-      }
-
-      input[type="text"], textarea {
-        width: 100%;
-        padding: 14px 16px;
-        border-radius: 10px;
-        border: 1.5px solid var(--border-color);
-        font-family: 'Inter', sans-serif;
-        font-size: 15px;
-        background: #f8fafc;
-        color: var(--text-main);
-        transition: all 0.2s;
-        outline: none;
-      }
-
-      input[type="text"]:focus, textarea:focus {
-        border-color: var(--primary);
-        background: #fff;
-        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
-      }
-
-      button {
-        width: 100%;
-        padding: 14px 20px;
-        background: var(--primary);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        font-size: 15px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 8px;
-        box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
-      }
-
-      button:hover {
-        background: var(--primary-hover);
-        transform: translateY(-1px);
-        box-shadow: 0 6px 8px -1px rgba(79, 70, 229, 0.4);
-      }
-
-      button:active {
-        transform: translateY(1px);
-        box-shadow: 0 2px 4px -1px rgba(79, 70, 229, 0.3);
-      }
-
-      button:disabled {
-        background: #9ca3af;
-        box-shadow: none;
-        cursor: not-allowed;
-        transform: none;
-      }
-
-      .btn-secondary {
-        background: #f1f5f9;
-        color: #334155;
-        border: 1px solid var(--border-color);
-        box-shadow: none;
-      }
-
-      .btn-secondary:hover {
-        background: #e2e8f0;
-        box-shadow: none;
-      }
-
-      /* Nhập liệu chính */
-      .primary-input-card {
-        grid-column: 1 / -1;
-        background: linear-gradient(145deg, #ffffff, #f8fafc);
-        border: 2px solid var(--primary);
-      }
-
-      .primary-input-card input {
-        font-size: 18px;
-        padding: 18px 20px;
-      }
-
-      .primary-input-card button {
-        font-size: 16px;
-      }
-
-      /* Tìm kiếm container */
-      .search-card textarea {
-        resize: vertical;
-        min-height: 120px;
-        line-height: 1.5;
-      }
-
-      .targets-display {
-        margin-top: 12px;
-        font-size: 14px;
-        background: #f8fafc;
-        border-radius: 10px;
-        padding: 16px;
-        border: 1.5px dashed var(--border-color);
-        min-height: 52px;
-      }
-
-      /* Message Notification */
-      #messageBox {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        background: white;
-        padding: 18px 24px;
-        border-radius: 12px;
-        box-shadow: var(--shadow-lg);
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        transform: translateY(150%);
-        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        z-index: 50;
-        border-left: 5px solid var(--success);
-      }
-
-      #messageBox.show {
-        transform: translateY(0);
-      }
-
-      #messageBox.error {
-        border-left-color: var(--danger);
-      }
-
-      #messageText {
-        font-weight: 600;
-        font-size: 15px;
-        color: var(--text-main);
-      }
-
-      /* Progress Bar */
-      #progressWrapper {
-        display: none;
-        width: 100%;
-        margin-top: 20px;
-        background: #f1f5f9;
-        border-radius: 999px;
-        overflow: hidden;
-        height: 24px;
-        position: relative;
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
-      }
-      
-      #progressBar {
-        height: 100%;
-        width: 0%;
-        border-radius: 999px;
-        background: linear-gradient(90deg, #4f46e5, #0ea5e9, #4f46e5);
-        background-size: 200% 100%;
-        animation: shimmer 1.5s infinite linear;
-        transition: width 0.4s ease;
-      }
-      
-      #progressText {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        font-weight: 700;
-        color: #fff;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-        pointer-events: none;
-      }
-
-      footer {
-        margin-top: 40px;
-        padding: 24px 0;
-        text-align: center;
-        color: var(--text-muted);
-        font-size: 14px;
-        font-weight: 500;
-      }
-
-      /* Animations */
-      @keyframes shimmer {
-        0% { background-position: 200% 0; }
-        100% { background-position: -200% 0; }
-      }
-
-      @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-
-      @keyframes fadeInDown {
-        from { opacity: 0; transform: translateY(-30px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      
-      /* Icons */
-      .icon {
-        width: 22px;
-        height: 22px;
-      }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    
-    <div class="app-header">
-      <h2>
-        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 36px; height: 36px; color: var(--primary)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-        Lưu Trữ Số Chứng Từ
-      </h2>
-      <div class="status-badge">
-        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px; width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
-        Bản ghi hiện tại: <span id="currentSheet" style="margin-left: 6px; font-weight: 800;">Đang tải...</span>
-      </div>
-    </div>
 
-    <div class="dashboard">
-      
-      <!-- Card: Lưu Mã -->
-      <div class="card primary-input-card">
-        <div class="card-header" style="border-bottom: none; margin-bottom: 12px;">
-          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-          Thêm Mới Mã Hoặc Quét Barcode
-        </div>
-        <div class="form-group" style="display: flex; gap: 16px; margin-bottom: 0;">
-          <input
-            type="text"
-            id="maDon"
-            placeholder="Nhập mã đơn hoặc quét tại đây..."
-            autofocus
-            style="flex: 1;"
-          />
-          <button onclick="saveMaDon()" style="width: 140px;">
-            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-            Lưu Mã
-          </button>
-        </div>
+    <!-- =============== LOGIN SCREEN =============== -->
+    <div id="loginScreen" class="login-screen">
+      <div class="login-bg-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
       </div>
 
-      <!-- Card: Tìm Kiểm -->
-      <div class="card search-card">
-        <div class="card-header">
-          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-          Kiểm Tra Mã
+      <div class="login-card" id="loginCard">
+        <div class="login-logo">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="url(#grad)" stroke-width="1.5">
+            <defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#818cf8"/><stop offset="100%" style="stop-color:#06b6d4"/></linearGradient></defs>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
         </div>
-        <div class="form-group">
-          <label for="targetsInput">Dán các danh sách cần tra cứu vào đây:</label>
-          <textarea
-            id="targetsInput"
-            rows="4"
-            placeholder="Mỗi mã 1 dòng..."
-          ></textarea>
-        </div>
-        <div id="targetsDisplay" class="targets-display" style="display:none;"></div>
-      </div>
+        <h1 class="login-title">Chứng Từ Manager</h1>
+        <p class="login-subtitle">Đăng nhập để tiếp tục</p>
 
-      <!-- Card: Quản Lý Cấu Hình -->
-      <div class="card">
-        <div class="card-header">
-          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-          Chức Năng & Xuất Dữ Liệu
+        <div id="loginError" class="login-error" style="display:none;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <span id="loginErrorText">Sai tài khoản hoặc mật khẩu</span>
         </div>
-        
-        <div class="form-group">
-          <label>Tạo bản ghi mới</label>
-          <div style="display: flex; gap: 12px;">
-            <input type="text" id="newSheetName" placeholder="Nhập tên..." />
-            <button onclick="createNewSheet()" class="btn-secondary" style="width: 100px;">Tạo</button>
+
+        <form id="loginForm" onsubmit="handleLogin(event)">
+          <div class="input-group">
+            <span class="input-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </span>
+            <input type="text" id="loginUser" placeholder="Tên đăng nhập" required autocomplete="username" />
           </div>
-        </div>
-
-        <div class="form-group" style="margin-top: 8px; border-top: 1px solid var(--border-color); padding-top: 16px;">
-          <label>Xuất Dữ Liệu PDF</label>
-          <div style="display: flex; gap: 12px;">
-            <input type="text" id="sheetToExport" placeholder="Tên bản ghi..." />
-            <button id="btnExportPDF" onclick="exportPDF()" style="width: 100px;">
-              <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-              Xuất
+          <div class="input-group">
+            <span class="input-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            </span>
+            <input type="password" id="loginPass" placeholder="Mật khẩu" required autocomplete="current-password" />
+            <button type="button" class="toggle-pass" onclick="togglePassword()">
+              <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
           </div>
-          
-          <div id="progressWrapper">
-            <div id="progressBar"></div>
-            <div id="progressText">0%</div>
-          </div>
-        </div>
+          <button type="submit" class="login-btn" id="loginBtn">
+            <span id="loginBtnText">Đăng Nhập</span>
+            <div id="loginSpinner" class="spinner" style="display:none;"></div>
+          </button>
+        </form>
+        <p class="login-footer-text">© 2026 Dinh Dau Moi Tracking System</p>
       </div>
-
-      <!-- Card: Cảnh báo định dạng lạ -->
-      <div class="card" style="grid-column: 1 / -1; border: 1px solid #fde68a;">
-        <div class="card-header" style="color: #b45309; border-bottom-color: #fef3c7;">
-          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-          Mã Sai Cấu Trúc / Bất Thường
-        </div>
-        <div class="form-group" style="margin-bottom: 0;">
-          <label>Cảnh báo: Tự động bắt các mã khác <strong>FRK...</strong> và <strong>TR80001...</strong> (các mã này vẫn được lưu):</label>
-          <textarea
-            id="unusualCodes"
-            rows="3"
-            readonly
-            style="background: #fffbeb; border-color: #fcd34d; color: #92400e; font-family: monospace; font-size: 15px;"
-            placeholder="Các mã có định dạng bị lệch ngoài 2 định dạng trên sẽ được liệt kê ở đây..."
-          ></textarea>
-        </div>
-      </div>
-
     </div>
 
-    <!-- Toast Notification (Replaces old text message) -->
+    <!-- =============== MAIN APP =============== -->
+    <div id="mainApp" style="display:none;">
+
+      <div class="app-header">
+        <div class="header-top-bar">
+          <div class="user-info" id="userInfo">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span id="displayName">User</span>
+          </div>
+          <button class="logout-btn" onclick="handleLogout()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Đăng xuất
+          </button>
+        </div>
+        <h2>
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 36px; height: 36px; color: var(--primary)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          Lưu Trữ Số Chứng Từ
+        </h2>
+        <div class="status-badge">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px; width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+          Bản ghi hiện tại: <span id="currentSheet" style="margin-left: 6px; font-weight: 800;">Đang tải...</span>
+        </div>
+      </div>
+
+      <div class="dashboard">
+        
+        <!-- Card: Lưu Mã -->
+        <div class="card primary-input-card">
+          <div class="card-header" style="border-bottom: none; margin-bottom: 12px;">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            Thêm Mới Mã Hoặc Quét Barcode
+          </div>
+          <div class="form-group" style="display: flex; gap: 16px; margin-bottom: 0;">
+            <input
+              type="text"
+              id="maDon"
+              placeholder="Nhập mã đơn hoặc quét tại đây..."
+              autofocus
+              style="flex: 1;"
+            />
+            <button onclick="saveMaDon()" style="width: 140px;">
+              <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+              Lưu Mã
+            </button>
+          </div>
+        </div>
+
+        <!-- Card: Tìm Kiểm -->
+        <div class="card search-card">
+          <div class="card-header">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            Kiểm Tra Mã
+          </div>
+          <div class="form-group">
+            <label for="targetsInput">Dán các danh sách cần tra cứu vào đây:</label>
+            <textarea
+              id="targetsInput"
+              rows="4"
+              placeholder="Mỗi mã 1 dòng..."
+            ></textarea>
+          </div>
+          <div id="targetsDisplay" class="targets-display" style="display:none;"></div>
+        </div>
+
+        <!-- Card: Quản Lý Cấu Hình -->
+        <div class="card">
+          <div class="card-header">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            Chức Năng & Xuất Dữ Liệu
+          </div>
+          
+          <div class="form-group">
+            <label>Tạo bản ghi mới</label>
+            <div style="display: flex; gap: 12px;">
+              <input type="text" id="newSheetName" placeholder="Nhập tên..." />
+              <button onclick="createNewSheet()" class="btn-secondary" style="width: 100px;">Tạo</button>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 8px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+            <label>Xuất Dữ Liệu PDF</label>
+            <div style="display: flex; gap: 12px;">
+              <input type="text" id="sheetToExport" placeholder="Tên bản ghi..." />
+              <button id="btnExportPDF" onclick="exportPDF()" style="width: 100px;">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Xuất
+              </button>
+            </div>
+            
+            <div id="progressWrapper">
+              <div id="progressBar"></div>
+              <div id="progressText">0%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card: Cảnh báo định dạng lạ -->
+        <div class="card" style="grid-column: 1 / -1; border: 1px solid #fde68a;">
+          <div class="card-header" style="color: #b45309; border-bottom-color: #fef3c7;">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            Mã Sai Cấu Trúc / Bất Thường
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label>Cảnh báo: Tự động bắt các mã khác <strong>FRK...</strong> và <strong>TR80001...</strong> (các mã này vẫn được lưu):</label>
+            <textarea
+              id="unusualCodes"
+              rows="3"
+              readonly
+              style="background: #fffbeb; border-color: #fcd34d; color: #92400e; font-family: monospace; font-size: 15px;"
+              placeholder="Các mã có định dạng bị lệch ngoài 2 định dạng trên sẽ được liệt kê ở đây..."
+            ></textarea>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
     <div id="messageBox">
       <svg id="messageIconSuccess" class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--success)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
       <svg id="messageIconError" class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--danger); display: none;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
       <span id="messageText">Khởi động hoàn tất</span>
-      
-      <!-- Hidden original message div to preserve js compatibility -->
       <div id="message" style="display:none;"></div>
     </div>
 
-    <script src="script.js"></script>
+    <footer>© 2026 Dinh Dau Moi Tracking System</footer>
 
+    <script src="script.js"></script>
+    <script src="auth.js"></script>
     <script>
       // Enhance script.js compatibility by intercepting changes to #message
       const messageNode = document.getElementById('message');
@@ -455,7 +197,6 @@
           if (mutation.type === 'childList') {
             const text = messageNode.textContent;
             if(!text) return;
-
             showToast(text);
           }
         });
@@ -506,5 +247,4 @@
       });
     </script>
   </body>
-  <footer>© 2026 Dinh Dau Moi Tracking System</footer>
 </html>

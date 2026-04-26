@@ -15,6 +15,11 @@ function doGet(e) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const action = e.parameter.action;
 
+  // --- Đăng nhập ---
+  if (action === "login") {
+    return handleLogin_(ss, e.parameter.user, e.parameter.pass);
+  }
+
   // --- Lưu hàng loạt mã đơn (từ buffer) ---
 if (action === "batchSave" && e.postData) {
   const sheetName = getProperty_("currentSheet") || "Dữ liệu";
@@ -28,11 +33,32 @@ if (action === "batchSave" && e.postData) {
   if (!Array.isArray(data) || data.length === 0)
     return ContentService.createTextOutput("Không có dữ liệu để lưu.");
 
+  // Lấy tất cả mã đã có trên sheet để kiểm tra trùng
   const lastRow = sheet.getLastRow();
+  const existingCodes = new Set();
+  if (lastRow > 1) {
+    const existing = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
+    existing.forEach(r => existingCodes.add(String(r[0]).trim()));
+  }
+
+  // Lọc bỏ mã trùng
+  const uniqueData = data.filter(m => !existingCodes.has(String(m).trim()));
+  const duplicates = data.filter(m => existingCodes.has(String(m).trim()));
+
+  if (uniqueData.length === 0) {
+    return ContentService.createTextOutput(`❌ Tất cả ${duplicates.length} mã đều bị trùng, không lưu.`);
+  }
+
+  const newLastRow = sheet.getLastRow();
   const now = Utilities.formatDate(new Date(), "Asia/Ho_Chi_Minh", "dd/MM/yyyy HH:mm:ss");
-  const rows = data.map((m, i) => [lastRow + i, m, "Móp", now]);
-  sheet.getRange(lastRow + 1, 1, rows.length, 4).setValues(rows);
-  return ContentService.createTextOutput(`Đã lưu ${rows.length} mã đơn.`);
+  const rows = uniqueData.map((m, i) => [newLastRow + i, m, "Móp", now]);
+  sheet.getRange(newLastRow + 1, 1, rows.length, 4).setValues(rows);
+
+  let msg = `Đã lưu ${uniqueData.length} mã đơn.`;
+  if (duplicates.length > 0) {
+    msg += ` (Bỏ qua ${duplicates.length} mã trùng: ${duplicates.join(", ")})`;
+  }
+  return ContentService.createTextOutput(msg);
 }
 
   if (action === "newSheet" && e.parameter.name) {
@@ -107,12 +133,32 @@ function doPost(e) {
       sheet.appendRow(["STT", "Mã Đơn - Số Chứng Từ", "Lý do", "Thời gian"]);
     }
 
+    // Lấy tất cả mã đã có trên sheet để kiểm tra trùng
     const lastRow = sheet.getLastRow();
-    const now = Utilities.formatDate(new Date(), "Asia/Ho_Chi_Minh", "dd/MM/yyyy HH:mm:ss");
-    const rows = data.map((m, i) => [lastRow + i, m, "Móp", now]);
-    sheet.getRange(lastRow + 1, 1, rows.length, 4).setValues(rows);
+    const existingCodes = new Set();
+    if (lastRow > 1) {
+      const existing = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
+      existing.forEach(r => existingCodes.add(String(r[0]).trim()));
+    }
 
-    return ContentService.createTextOutput(`Đã lưu ${rows.length} mã đơn.`);
+    // Lọc bỏ mã trùng
+    const uniqueData = data.filter(m => !existingCodes.has(String(m).trim()));
+    const duplicates = data.filter(m => existingCodes.has(String(m).trim()));
+
+    if (uniqueData.length === 0) {
+      return ContentService.createTextOutput(`❌ Tất cả ${duplicates.length} mã đều bị trùng, không lưu.`);
+    }
+
+    const newLastRow = sheet.getLastRow();
+    const now = Utilities.formatDate(new Date(), "Asia/Ho_Chi_Minh", "dd/MM/yyyy HH:mm:ss");
+    const rows = uniqueData.map((m, i) => [newLastRow + i, m, "Móp", now]);
+    sheet.getRange(newLastRow + 1, 1, rows.length, 4).setValues(rows);
+
+    let msg = `Đã lưu ${uniqueData.length} mã đơn.`;
+    if (duplicates.length > 0) {
+      msg += ` (Bỏ qua ${duplicates.length} mã trùng: ${duplicates.join(", ")})`;
+    }
+    return ContentService.createTextOutput(msg);
   } catch (err) {
     return ContentService.createTextOutput("❌ Lỗi batchSave: " + err);
   }
@@ -226,4 +272,42 @@ function buildHTML_(data, sheetName) {
       </div>
     </body>
   </html>`;
+}
+
+/**
+ * Xác thực đăng nhập: kiểm tra username/password từ sheet "Users"
+ * Sheet "Users" cần có cột: username | password | displayName
+ */
+function handleLogin_(ss, user, pass) {
+  if (!user || !pass) {
+    return ContentService.createTextOutput(
+      JSON.stringify({ success: false, message: "Vui lòng nhập đầy đủ thông tin." })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const sheet = ss.getSheetByName("Users");
+  if (!sheet) {
+    return ContentService.createTextOutput(
+      JSON.stringify({ success: false, message: "Chưa tạo sheet Users. Liên hệ admin." })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const data = sheet.getDataRange().getValues();
+  // Skip header row (row 0)
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (String(row[0]).trim() === user && String(row[1]).trim() === pass) {
+      return ContentService.createTextOutput(
+        JSON.stringify({
+          success: true,
+          displayName: String(row[2] || user).trim(),
+          message: "Đăng nhập thành công!"
+        })
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
+  return ContentService.createTextOutput(
+    JSON.stringify({ success: false, message: "Sai tài khoản hoặc mật khẩu." })
+  ).setMimeType(ContentService.MimeType.JSON);
 }
