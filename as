@@ -77,6 +77,30 @@ if (action === "batchSave" && e.postData) {
     return ContentService.createTextOutput(getProperty_("currentSheet") || "Dữ liệu");
   }
 
+  // --- Lấy toàn bộ dữ liệu trong sheet hiện tại ---
+  if (action === "getData") {
+    const sheetName = getProperty_("currentSheet") || "Dữ liệu";
+    const sheet = ss.getSheetByName(sheetName);
+    if (!sheet) {
+      return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
+    }
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 1) {
+      return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
+    }
+    const lastCol = sheet.getLastColumn();
+    const values = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+    const result = values.map(row => {
+      return {
+        stt: row[0],
+        code: row[1],
+        reason: row[2] || "",
+        time: row[3] || ""
+      };
+    });
+    return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+  }
+
 // --- Xuất PDF chuẩn (render HTML -> PDF) ---
 if (action === "exportPDF" && e.parameter.sheetName) {
   const sheetName = e.parameter.sheetName;
@@ -114,6 +138,35 @@ if (action === "exportPDF" && e.parameter.sheetName) {
   const viewUrl = `https://drive.google.com/file/d/${fileId}/view?usp=drivesdk`;
   return ContentService.createTextOutput(viewUrl);
 }
+  // --- Lấy danh sách tên tất cả sheet ---
+  if (action === "getSheetNames") {
+    var sheets = ss.getSheets();
+    var names = sheets.map(function(s) { return s.getName(); });
+    return ContentService.createTextOutput(JSON.stringify(names))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // --- Lấy dữ liệu mã từ sheet (cột B - Mã Đơn) ---
+  if (action === "getSheetData" && e.parameter.sheetName) {
+    var targetSheet = ss.getSheetByName(e.parameter.sheetName);
+    if (!targetSheet) {
+      return ContentService.createTextOutput(JSON.stringify({ error: "Sheet không tồn tại" }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    var lr = targetSheet.getLastRow();
+    if (lr < 2) {
+      return ContentService.createTextOutput(JSON.stringify([]))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    // Lấy cột B (cột 2 - Mã Đơn), bỏ header dòng 1
+    var values = targetSheet.getRange(2, 2, lr - 1, 1).getValues();
+    var codes = values
+      .map(function(row) { return String(row[0]).trim(); })
+      .filter(function(val) { return val !== "" && val !== "undefined"; });
+    return ContentService.createTextOutput(JSON.stringify(codes))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
   return ContentService.createTextOutput("OK");
 }
 /**

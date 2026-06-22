@@ -8,6 +8,8 @@
     <link rel="icon" href="icon.jpg" type="image/png" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css" />
+    <!-- html5-qrcode: Thư viện quét barcode/QR mạnh nhất -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   </head>
   <body>
 
@@ -59,6 +61,48 @@
       </div>
     </div>
 
+    <!-- =============== SCANNER MODAL =============== -->
+    <div id="scannerModal" class="scanner-modal">
+      <div class="scanner-modal-backdrop" onclick="closeScanner()"></div>
+      <div class="scanner-modal-content">
+        <div class="scanner-modal-header">
+          <div class="scanner-title-group">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+            <h3>Quét Barcode / QR Code</h3>
+          </div>
+          <button class="scanner-close-btn" onclick="closeScanner()" title="Đóng">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="scanner-body">
+          <!-- Camera preview -->
+          <div id="scannerPreview" class="scanner-preview"></div>
+
+          <!-- Scanner status -->
+          <div id="scannerStatus" class="scanner-status scanner-status-ready">
+            <div class="scanner-status-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+            </div>
+            <span id="scannerStatusText">Đang chờ quét...</span>
+          </div>
+
+          <!-- Last scanned -->
+          <div id="lastScannedArea" class="last-scanned" style="display: none;">
+            <div class="last-scanned-label">Mã vừa quét:</div>
+            <div id="lastScannedCode" class="last-scanned-code"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- =============== MAIN APP =============== -->
     <div id="mainApp" style="display:none;">
 
@@ -85,13 +129,13 @@
 
       <div class="dashboard">
         
-        <!-- Card: Lưu Mã -->
+        <!-- Card: Lưu Mã + Quét Barcode -->
         <div class="card primary-input-card">
           <div class="card-header" style="border-bottom: none; margin-bottom: 12px;">
             <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
             Thêm Mới Mã Hoặc Quét Barcode
           </div>
-          <div class="form-group" style="display: flex; gap: 16px; margin-bottom: 0;">
+          <div class="form-group" style="display: flex; gap: 12px; margin-bottom: 0; align-items: stretch;">
             <input
               type="text"
               id="maDon"
@@ -99,9 +143,16 @@
               autofocus
               style="flex: 1;"
             />
-            <button onclick="saveMaDon()" style="width: 140px;">
+            <button onclick="saveMaDon()" class="btn-save-code" style="width: 130px;">
               <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
               Lưu Mã
+            </button>
+            <button onclick="openScanner()" class="btn-scan" style="width: 160px;" id="btnOpenScanner">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+              Quét Camera
             </button>
           </div>
         </div>
@@ -151,6 +202,113 @@
             <div id="progressWrapper">
               <div id="progressBar"></div>
               <div id="progressText">0%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =============== CARD: SO SÁNH DỮ LIỆU SHEET =============== -->
+        <div class="card comparison-card" style="grid-column: 1 / -1;">
+          <div class="card-header comparison-header">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #8b5cf6;">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+            </svg>
+            So Sánh Dữ Liệu Sheet
+            <span id="comparisonBadge" class="comparison-badge" style="display: none;">
+              <span id="comparisonBadgeText">0 mã</span>
+            </span>
+          </div>
+
+          <!-- Controls -->
+          <div class="comparison-controls">
+            <div class="comparison-control-row">
+              <div class="comparison-select-wrapper">
+                <label for="sheetSelect">Chọn Sheet dữ liệu:</label>
+                <div style="display: flex; gap: 10px;">
+                  <select id="sheetSelect" class="comparison-select">
+                    <option value="">-- Chọn sheet --</option>
+                  </select>
+                  <button onclick="loadSheetList()" class="btn-icon-refresh" title="Làm mới danh sách">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="23 4 23 10 17 10"/>
+                      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <button onclick="loadSheetData()" class="btn-load-data" id="btnLoadData">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Tải Dữ Liệu
+              </button>
+            </div>
+          </div>
+
+          <!-- Stats Bar -->
+          <div id="comparisonStats" class="comparison-stats" style="display: none;">
+            <div class="stat-item stat-total">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span>Tổng: <strong id="statTotal">0</strong></span>
+            </div>
+            <div class="stat-item stat-matched">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <span>Đã nhận: <strong id="statMatched">0</strong></span>
+            </div>
+            <div class="stat-item stat-missing">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              <span>Còn xót: <strong id="statMissing">0</strong></span>
+            </div>
+            <div class="stat-item stat-excess" style="background-color: rgba(245, 158, 11, 0.1); color: #d97706; border-left: 4px solid #f59e0b;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span>Lưu dư: <strong id="statExcess">0</strong></span>
+            </div>
+          </div>
+
+          <!-- Progress bar for loading -->
+          <div id="comparisonLoading" class="comparison-loading" style="display: none;">
+            <div class="comparison-loading-bar"></div>
+            <span>Đang tải dữ liệu...</span>
+          </div>
+
+          <!-- Comparison Table -->
+          <div id="comparisonTableWrapper" class="comparison-table-wrapper" style="display: none;">
+            <div class="comparison-table-header-bar">
+              <h4>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+                </svg>
+                Danh Sách Mã Còn Xót (Chưa Nhận)
+              </h4>
+              <span id="missingCount" class="missing-count-badge">0</span>
+            </div>
+            <div id="missingCodesGrid" class="missing-codes-grid">
+              <!-- Rendered by JS -->
+            </div>
+            <div id="allMatchedMessage" class="all-matched-message" style="display: none;">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.5">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+              <h4>Tất cả mã đã được nhận!</h4>
+              <p>Không còn mã nào bị xót.</p>
+            </div>
+
+            <!-- Excess Codes Section -->
+            <div class="comparison-table-header-bar" style="margin-top: 24px; border-top: 1px solid rgba(217, 119, 6, 0.15); border-bottom: 1px solid rgba(217, 119, 6, 0.15); padding: 14px 20px; display: none; background: linear-gradient(135deg, #fffbeb, #fff7ed);" id="excessHeaderBar">
+              <h4 style="color: #d97706; margin: 0; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                Danh Sách Mã Lưu Dư (Ngoài Danh Sách So Sánh)
+              </h4>
+              <span id="excessCount" class="missing-count-badge" style="background-color: #d97706; padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 800; min-width: 32px; text-align: center; color: white;">0</span>
+            </div>
+            <div id="excessCodesGrid" class="missing-codes-grid" style="display: none; border-top: none;">
+              <!-- Rendered by JS -->
             </div>
           </div>
         </div>

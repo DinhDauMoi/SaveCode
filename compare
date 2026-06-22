@@ -1,0 +1,553 @@
+/**
+ * HỆ THỐNG LƯU MÃ ĐƠN – XUẤT PDF ĐẸP CHUẨN
+ * Phiên bản 2026 - V3 (Quản lý số kiện, lý do tùy chỉnh, bảng dữ liệu phân trang)
+ */
+
+function getProperty_(key) {
+  return PropertiesService.getScriptProperties().getProperty(key);
+}
+function setProperty_(key, value) {
+  PropertiesService.getScriptProperties().setProperty(key, value);
+}
+
+function getSoKien_(code) {
+  var cleanCode = code.trim();
+  if (cleanCode.toUpperCase().indexOf("FRK") === 0) {
+    cleanCode = cleanCode.substring(3);
+  }
+  var match = cleanCode.match(/F(\d+)/i);
+  if (match) {
+    return match[1];
+  }
+  return "1";
+}
+
+function doGet(e) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const action = e.parameter.action;
+
+  // --- Đăng nhập ---
+  if (action === "login") {
+    return handleLogin_(ss, e.parameter.user, e.parameter.pass);
+  }
+
+  // --- Lấy toàn bộ dữ liệu trong sheet hiện tại ---
+  if (action === "getData") {
+    const sheetName = getProperty_("currentSheet") || "Dữ liệu";
+    const sheet = ss.getSheetByName(sheetName);
+    if (!sheet) {
+      return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
+    }
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 1) {
+      return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
+    }
+    const lastCol = sheet.getLastColumn();
+    const values = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+    const result = values.map(row => {
+      // Cột cũ: STT (0), Mã Đơn (1), Lý do (2), Thời gian (3)
+      // Cột mới: STT (0), Mã Đơn (1), Số Kiện (2), Lý do (3), Thời gian (4)
+      if (lastCol === 4) {
+        return {
+          stt: row[0],
+          code: row[1],
+          qty: getSoKien_(row[1]),
+          reason: row[2],
+          time: row[3]
+        };
+      } else {
+        return {
+          stt: row[0],
+          code: row[1],
+          qty: row[2],
+          reason: row[3],
+          time: row[4]
+        };
+      }
+    });
+    return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // --- Cập nhật Lý do và Số Kiện cho mã vận đơn ---
+  if (action === "updateRow" && e.parameter.code) {
+    const lock = LockService.getScriptLock();
+    try {
+      lock.waitLock(15000);
+      const sheetName = getProperty_("currentSheet") || "Dữ liệu";
+      const sheet = ss.getSheetByName(sheetName);
+      if (!sheet) return ContentService.createTextOutput("❌ Không tìm thấy sheet!");
+      
+      const code = e.parameter.code.trim();
+      const newReason = (e.parameter.reason || "").trim();
+      const newQty = (e.parameter.qty || "").trim();
+      const lastRow = sheet.getLastRow();
+      
+      if (lastRow > 1) {
+        const codes = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
+        for (let i = 0; i < codes.length; i++) {
+          if (String(codes[i][0]).trim() === code) {
+            const lastCol = sheet.getLastColumn();
+            if (lastCol === 4) {
+              // Sheet cũ (STT, Mã Đơn, Lý do, Thời gian)
+              sheet.getRange(2 + i, 3).setValue(newReason);
+            } else {
+              // Sheet mới (STT, Mã Đơn, Số Kiện, Lý do, Thời gian)
+              if (newQty !== "") {
+                sheet.getRange(2 + i, 3).setValue(newQty);
+              }
+              sheet.getRange(2 + i, 4).setValue(newReason);
+            }
+            return ContentService.createTextOutput("✅ Cập nhật dòng thành công!");
+          }
+        }
+      }
+      return ContentService.createTextOutput("❌ Không tìm thấy mã vận đơn!");
+    } catch (err) {
+      return ContentService.createTextOutput("❌ Lỗi hệ thống bận: " + err.message);
+    } finally {
+      lock.releaseLock();
+    }
+  }
+
+  // --- Xóa mã vận đơn ---
+  if (action === "deleteRow" && e.parameter.code) {
+    const lock = LockService.getScriptLock();
+    try {
+      lock.waitLock(15000);
+      const sheetName = getProperty_("currentSheet") || "Dữ liệu";
+      const sheet = ss.getSheetByName(sheetName);
+      if (!sheet) return ContentService.createTextOutput("❌ Không tìm thấy sheet!");
+      
+      const code = e.parameter.code.trim();
+      const lastRow = sheet.getLastRow();
+      
+      if (lastRow > 1) {
+        const codes = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
+        for (let i = 0; i < codes.length; i++) {
+          if (String(codes[i][0]).trim() === code) {
+            sheet.deleteRow(2 + i);
+            
+            // Đánh lại số thứ tự STT ở cột 1
+            const newLastRow = sheet.getLastRow();
+            if (newLastRow > 1) {
+              const sttRange = sheet.getRange(2, 1, newLastRow - 1, 1);
+              const sttValues = [];
+              for (let j = 0; j < newLastRow - 1; j++) {
+                sttValues.push([j + 1]);
+              }
+              sttRange.setValues(sttValues);
+            }
+            return ContentService.createTextOutput("✅ Xóa mã vận đơn thành công!");
+          }
+        }
+      }
+      return ContentService.createTextOutput("❌ Không tìm thấy mã vận đơn!");
+    } catch (err) {
+      return ContentService.createTextOutput("❌ Lỗi hệ thống bận: " + err.message);
+    } finally {
+      lock.releaseLock();
+    }
+  }
+
+  // --- Lưu hàng loạt mã đơn (từ buffer) ---
+  if (action === "batchSave" && e.postData) {
+    return handleBatchSave_(ss, e.postData.contents);
+  }
+
+  // --- Tạo Sheet mới ---
+  if (action === "newSheet" && e.parameter.name) {
+    const newName = e.parameter.name.trim();
+    if (!newName) return ContentService.createTextOutput("❌ Tên sheet không hợp lệ!");
+    let sheet = ss.getSheetByName(newName);
+    if (!sheet) {
+      sheet = ss.insertSheet(newName);
+      sheet.appendRow(["STT", "Mã Đơn - Số Chứng Từ", "Số Kiện", "Lý do", "Thời gian"]);
+    }
+    setProperty_("currentSheet", newName);
+    return ContentService.createTextOutput(`✅ Đang dùng sheet "${newName}"`);
+  }
+
+  // --- Lấy tên Sheet hiện tại ---
+  if (action === "getCurrentSheet") {
+    return ContentService.createTextOutput(getProperty_("currentSheet") || "Dữ liệu");
+  }
+
+  // --- Xuất PDF chuẩn nằm ngang ---
+  if (action === "exportPDF" && e.parameter.sheetName) {
+    const sheetName = e.parameter.sheetName;
+    const sheet = ss.getSheetByName(sheetName);
+    if (!sheet) return ContentService.createTextOutput("❌ Không tìm thấy sheet!");
+
+    const data = sheet.getDataRange().getValues();
+    const lastCol = sheet.getLastColumn();
+
+    // Loại bỏ cột cuối "Thời gian" trước khi tạo PDF
+    // Nếu sheet 5 cột thì lấy 4 cột đầu. Nếu sheet 4 cột thì lấy 3 cột đầu.
+    const columnsToKeep = (lastCol === 4) ? 3 : 4;
+    const dataWithoutTime = data.map(row => row.slice(0, columnsToKeep));
+
+    const htmlContent = buildHTML_(dataWithoutTime, sheetName);
+
+    // Render HTML đúng chuẩn PDF
+    const htmlOutput = HtmlService.createHtmlOutput(htmlContent)
+      .setWidth(1000)
+      .setHeight(700);
+
+    // Tạo blob PDF hợp lệ
+    const blob = htmlOutput.getBlob().getAs("application/pdf").setName(`${sheetName}.pdf`);
+
+    // Lưu PDF vào Drive
+    const pdfFile = DriveApp.createFile(blob);
+    pdfFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+    // Xóa file PDF cũ
+    const old = getProperty_('lastExportedPdfId');
+    if (old) {
+      try { DriveApp.getFileById(old).setTrashed(true); } catch(e){}
+    }
+    setProperty_('lastExportedPdfId', pdfFile.getId());
+
+    const fileId = pdfFile.getId();
+    const viewUrl = `https://drive.google.com/file/d/${fileId}/view?usp=drivesdk`;
+    return ContentService.createTextOutput(viewUrl);
+  }
+
+  // --- Lấy danh sách tên tất cả sheet ---
+  if (action === "getSheetNames") {
+    var sheets = ss.getSheets();
+    var names = sheets.map(function(s) { return s.getName(); });
+    return ContentService.createTextOutput(JSON.stringify(names))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // --- Lấy dữ liệu mã từ sheet (cột B - Mã Đơn) ---
+  if (action === "getSheetData" && e.parameter.sheetName) {
+    var targetSheet = ss.getSheetByName(e.parameter.sheetName);
+    if (!targetSheet) {
+      return ContentService.createTextOutput(JSON.stringify({ error: "Sheet không tồn tại" }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    var lr = targetSheet.getLastRow();
+    if (lr < 2) {
+      return ContentService.createTextOutput(JSON.stringify([]))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    // Lấy cột B (cột 2 - Mã Đơn), bỏ header dòng 1
+    var values = targetSheet.getRange(2, 2, lr - 1, 1).getValues();
+    var codes = values
+      .map(function(row) { return String(row[0]).trim(); })
+      .filter(function(val) { return val !== "" && val !== "undefined"; });
+    return ContentService.createTextOutput(JSON.stringify(codes))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  return ContentService.createTextOutput("OK");
+}
+
+/**
+ * Xử lý khi web gửi POST (lưu hàng loạt)
+ */
+function doPost(e) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    return handleBatchSave_(ss, e.postData.contents);
+  } catch (err) {
+    return ContentService.createTextOutput("❌ Lỗi batchSave: " + err);
+  }
+}
+
+/**
+ * Hàm phụ xử lý lưu hàng loạt mã
+ */
+function handleBatchSave_(ss, postDataContents) {
+  const lock = LockService.getScriptLock();
+  try {
+    // Đợi tối đa 15 giây để lấy khóa ghi dữ liệu độc quyền
+    lock.waitLock(15000);
+
+    const sheetName = getProperty_("currentSheet") || "Dữ liệu";
+    let sheet = ss.getSheetByName(sheetName);
+    if (!sheet) {
+      sheet = ss.insertSheet(sheetName);
+      sheet.appendRow(["STT", "Mã Đơn - Số Chứng Từ", "Số Kiện", "Lý do", "Thời gian"]);
+    }
+
+    const data = JSON.parse(postDataContents || "[]");
+    if (!Array.isArray(data) || data.length === 0) {
+      return ContentService.createTextOutput("Không có dữ liệu để lưu.");
+    }
+
+    // Lấy danh sách cột
+    const lastCol = sheet.getLastColumn();
+
+    // Chuẩn hóa dữ liệu đầu vào thành mảng object { code, reason, qty }
+    const items = data.map(item => {
+      if (item && typeof item === 'object') {
+        return {
+          code: String(item.code || "").trim(),
+          reason: String(item.reason !== undefined ? item.reason : "").trim(),
+          qty: String(item.qty !== undefined ? item.qty : "")
+        };
+      } else {
+        const codeStr = String(item).trim();
+        return {
+          code: codeStr,
+          reason: "",
+          qty: ""
+        };
+      }
+    }).filter(item => item.code !== "");
+
+    // Lấy tất cả mã đã có trên sheet để kiểm tra trùng
+    const lastRow = sheet.getLastRow();
+    const existingCodes = new Set();
+    if (lastRow > 1) {
+      const existing = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
+      existing.forEach(r => existingCodes.add(String(r[0]).trim()));
+    }
+
+    // Lọc bỏ mã trùng
+    const uniqueItems = items.filter(item => !existingCodes.has(item.code));
+    const duplicates = items.filter(item => existingCodes.has(item.code));
+
+    if (uniqueItems.length === 0) {
+      return ContentService.createTextOutput(`❌ Tất cả ${duplicates.length} mã đều bị trùng, không lưu.`);
+    }
+
+    const newLastRow = sheet.getLastRow();
+    const now = Utilities.formatDate(new Date(), "Asia/Ho_Chi_Minh", "dd/MM/yyyy HH:mm:ss");
+    
+    var rows = [];
+    if (lastCol === 4) {
+      // Sheet kiểu cũ: STT (0), Mã Đơn (1), Lý do (2), Thời gian (3)
+      rows = uniqueItems.map((item, i) => {
+        return [newLastRow + i, item.code, item.reason, now];
+      });
+      sheet.getRange(newLastRow + 1, 1, rows.length, 4).setValues(rows);
+    } else {
+      // Sheet kiểu mới: STT (0), Mã Đơn (1), Số Kiện (2), Lý do (3), Thời gian (4)
+      rows = uniqueItems.map((item, i) => {
+        const qty = item.qty || getSoKien_(item.code);
+        return [newLastRow + i, item.code, qty, item.reason, now];
+      });
+      sheet.getRange(newLastRow + 1, 1, rows.length, 5).setValues(rows);
+    }
+
+    let msg = `Đã lưu ${uniqueItems.length} mã đơn.`;
+    if (duplicates.length > 0) {
+      msg += ` (Bỏ qua ${duplicates.length} mã trùng)`;
+    }
+    return ContentService.createTextOutput(msg);
+  } catch (err) {
+    return ContentService.createTextOutput("❌ Hệ thống đang bận ghi dữ liệu, vui lòng thử lại sau: " + err.message);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/**
+ * Tạo HTML chia đôi bảng + canh giữa + header/footer + số trang/tổng trang
+ */
+function buildHTML_(data, sheetName) {
+  const headerRow = data[0];
+  const items = data.slice(1);
+  
+  // Phân trang dữ liệu:
+  // Trang đầu tiên có header lớn, chứa khoảng 26 dòng (13 dòng mỗi cột)
+  // Các trang sau chỉ có header nhỏ, chứa khoảng 40 dòng (20 dòng mỗi cột)
+  const firstPageCap = 26;
+  const otherPageCap = 40;
+  
+  const pages = [];
+  let index = 0;
+  while (index < items.length || (items.length === 0 && pages.length === 0)) {
+    const isFirst = (pages.length === 0);
+    const cap = isFirst ? firstPageCap : otherPageCap;
+    const chunk = items.slice(index, index + cap);
+    pages.push(chunk);
+    index += cap;
+    if (items.length === 0) break;
+  }
+  
+  const totalPages = pages.length;
+  let htmlContent = `
+  <html>
+    <head>
+      <meta charset="utf-8" />
+      <style>
+        @page {
+          size: landscape;
+          margin: 10mm;
+        }
+        body {
+          font-family: Arial, sans-serif;
+          margin: 0;
+          padding: 0;
+        }
+        .page {
+          position: relative;
+          page-break-after: always;
+          box-sizing: border-box;
+          height: 100%;
+          min-height: 180mm; /* Đảm bảo chiều cao tối thiểu cho khổ ngang A4 trừ lề */
+        }
+        .page:last-child {
+          page-break-after: avoid;
+        }
+        .header {
+          text-align: center;
+          margin-bottom: 15px;
+        }
+        .header h3 {
+          margin: 4px 0;
+          font-size: 13px;
+        }
+        .tables {
+          display: flex;
+          justify-content: center;
+          gap: 20px;
+          text-align: center;
+        }
+        table.data {
+          border-collapse: collapse;
+          width: 48%;
+          font-size: 11px;
+        }
+        th, td {
+          border: 1px solid #333;
+          padding: 4px;
+          text-align: center;
+        }
+        .footer {
+          margin-top: 30px;
+          display: flex;
+          justify-content: space-around;
+          font-weight: bold;
+        }
+        h2 {
+          margin-top: 5px;
+          margin-bottom: 5px;
+          font-size: 18px;
+        }
+        .textr {
+          padding-top: 6px;
+          font-size: 12px;
+        }
+        .page-number {
+          position: absolute;
+          bottom: 5mm;
+          right: 5mm;
+          font-size: 12px;
+          font-weight: bold;
+        }
+      </style>
+    </head>
+    <body>
+  `;
+  
+  const colHTML = (col) => `
+    <table class="data">
+      ${col.map((r, i) =>
+        `<tr>${r.map(c => `<td>${i === 0 ? `<b>${c}</b>` : c}</td>`).join('')}</tr>`
+      ).join('')}
+    </table>
+  `;
+
+  for (let p = 0; p < totalPages; p++) {
+    const pageItems = pages[p];
+    const half = Math.ceil(pageItems.length / 2);
+    const col1 = [headerRow].concat(pageItems.slice(0, half));
+    const col2 = [headerRow].concat(pageItems.slice(half));
+    const isFirst = (p === 0);
+    const isLast = (p === totalPages - 1);
+    
+    htmlContent += `
+      <div class="page">
+        ${isFirst ? `
+        <div class="header">
+          <div style="display:flex; text-align: center; justify-content: center;">
+            <div>
+              <h3>CNBC VIETTEL TÂY NINH</h3>
+              <h3>KHO VÙNG LONG AN</h3>
+            </div>
+            <div style="width:15%;"></div>
+            <div>
+              <h3>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h3>
+              <div style="font-weight: bold; font-size: 13px;">Độc lập – Tự do – Hạnh phúc</div>
+            </div>
+          </div>
+          <h2>BIÊN BẢN BÀN GIAO HÀNG</h2>
+          <div class="textr">Hôm nay, .............. tháng .............. năm .............. tại Kho Tổng Long Châu.</div>
+          <div class="textr">Bên giao hàng ..............................................................................................</div>
+          <div class="textr"> - Ông (bà) ...................................................................................................</div>
+          <div class="textr">Bên nhận hàng ..............................................................................................</div>
+          <div class="textr"> - Ông (bà) ...................................................................................................</div>
+          <div class="textr" style="text-align: left; font-weight: bold;">Chúng tôi cùng thống nhất bàn giao các mã bưu gửi theo danh sách như sau :</div>
+        </div>
+        ` : `
+        <div class="header">
+          <h2 style="text-align: center;">BIÊN BẢN BÀN GIAO HÀNG</h2>
+        </div>
+        `}
+        
+        <div class="tables">
+          ${colHTML(col1)}
+          ${col2.length > 1 ? colHTML(col2) : ""}
+        </div>
+        
+        ${isLast ? `
+        <div class="textr" style="margin-top: 15px;">Biên bản này được lập thành 02 bản và có giá trị pháp lý như nhau, 01 bản lưu tại bên nhận, 01 bản đưa bên vận chuyển.</div>
+        <div class="footer">
+          <div>BÊN GIAO HÀNG</div>
+          <div>BÊN NHẬN HÀNG</div>
+        </div>
+        ` : ''}
+        
+        <div class="page-number">Trang ${p + 1} / ${totalPages}</div>
+      </div>
+    `;
+  }
+  
+  htmlContent += `
+    </body>
+  </html>
+  `;
+  
+  return htmlContent;
+}
+
+/**
+ * Xác thực đăng nhập: kiểm tra username/password từ sheet "Users"
+ */
+function handleLogin_(ss, user, pass) {
+  if (!user || !pass) {
+    return ContentService.createTextOutput(
+      JSON.stringify({ success: false, message: "Vui lòng nhập đầy đủ thông tin." })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const sheet = ss.getSheetByName("Users");
+  if (!sheet) {
+    return ContentService.createTextOutput(
+      JSON.stringify({ success: false, message: "Chưa tạo sheet Users. Liên hệ admin." })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (String(row[0]).trim() === user && String(row[1]).trim() === pass) {
+      return ContentService.createTextOutput(
+        JSON.stringify({
+          success: true,
+          displayName: String(row[2] || user).trim(),
+          message: "Đăng nhập thành công!"
+        })
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
+  return ContentService.createTextOutput(
+    JSON.stringify({ success: false, message: "Sai tài khoản hoặc mật khẩu." })
+  ).setMimeType(ContentService.MimeType.JSON);
+}
