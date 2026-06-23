@@ -64,7 +64,8 @@ function saveMaDon() {
   if (buffer.includes(maDon)) {
     document.getElementById("message").textContent = `❌ Trùng lặp: Mã "${maDon}" đang trong hàng chờ gửi!`;
     input.value = "";
-    input.focus();
+    // Chỉ focus input khi KHÔNG đang quét bằng camera
+    if (!scannerIsRunning) input.focus();
     return;
   }
 
@@ -99,7 +100,8 @@ function saveMaDon() {
 
   buffer.push(maDon);
   input.value = "";
-  input.focus();
+  // Chỉ focus input khi KHÔNG đang quét bằng camera (tránh bàn phím nhảy lên trên mobile)
+  if (!scannerIsRunning) input.focus();
   
   if (isTargetFound) {
     document.getElementById("message").textContent = `🎯 TÌM THẤY MÃ TRA CỨU: ${maDon}`;
@@ -330,10 +332,15 @@ function openScanner() {
     html5QrCode = new Html5Qrcode("scannerPreview");
   }
 
+  // Tính kích thước qrbox dựa trên màn hình, to hơn để dễ quét
+  const screenW = window.innerWidth;
+  const qrboxW = Math.min(Math.floor(screenW * 0.75), 450);
+  const qrboxH = Math.min(Math.floor(qrboxW * 0.6), 300);
+
   const config = {
-    fps: 10,
-    qrbox: { width: 280, height: 180 },
-    aspectRatio: 1.5,
+    fps: 15,
+    qrbox: { width: qrboxW, height: qrboxH },
+    aspectRatio: 1.0,
     formatsToSupport: [
       Html5QrcodeSupportedFormats.QR_CODE,
       Html5QrcodeSupportedFormats.CODE_128,
