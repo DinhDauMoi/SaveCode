@@ -144,7 +144,7 @@ button:disabled { background: #9ca3af; box-shadow: none; cursor: not-allowed; tr
   box-shadow: 0 25px 60px rgba(0,0,0,0.5), 0 0 100px rgba(139,92,246,0.1);
   animation: modalSlideIn 0.4s cubic-bezier(0.16,1,0.3,1);
   border-radius: 20px;
-  max-height: 55vh; max-height: 55dvh;
+  max-height: 85vh; max-height: 85dvh;
   display: flex; flex-direction: column;
 }
 .scanner-modal.active .scanner-modal-content { animation: modalSlideIn 0.4s cubic-bezier(0.16,1,0.3,1); }
@@ -161,6 +161,18 @@ button:disabled { background: #9ca3af; box-shadow: none; cursor: not-allowed; tr
 
 .scanner-preview { width: 100%; border-radius: 12px; overflow: hidden; background: #000; flex: 1; min-height: 350px; position: relative; }
 .scanner-preview video { width: 100% !important; height: 100% !important; object-fit: cover; border-radius: 12px; }
+
+/* Override html5-qrcode scanning region styles */
+#qr-shaded-region {
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+/* Hide the built-in scan animation image */
+#scannerPreview img[alt="End of qr scanner."] { display: none !important; }
+/* Override the green scanning line/border to white */
+#scannerPreview video + div,
+#scannerPreview > div > div[style] {
+  border-color: rgba(255, 255, 255, 0.85) !important;
+}
 
 /* Scanner status */
 .scanner-status { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 12px; margin-top: 10px; font-size: 13px; font-weight: 600; transition: all 0.3s; flex-shrink: 0; }
