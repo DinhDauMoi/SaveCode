@@ -60,6 +60,14 @@ function saveMaDon() {
   const maDon = input.value.trim();
   if (!maDon) return;
 
+  // Kiểm tra mã chỉ chứa số: phải có đúng 12 số mới lưu
+  if (/^\d+$/.test(maDon) && maDon.length !== 12) {
+    document.getElementById("message").textContent = `❌ Lỗi: Mã chỉ chứa số phải có đúng 12 chữ số!`;
+    input.value = "";
+    if (!scannerIsRunning) input.focus();
+    return;
+  }
+
   // Lọc trùng: Chỉ kiểm tra trong buffer chờ gửi (server sẽ kiểm tra trùng trên sheet)
   if (buffer.includes(maDon)) {
     document.getElementById("message").textContent = `❌ Trùng lặp: Mã "${maDon}" đang trong hàng chờ gửi!`;
@@ -194,7 +202,8 @@ function syncMatchedCodesWithWorkingSheet() {
 
 // 🧾 Tạo sheet mới
 function createNewSheet() {
-  const name = document.getElementById("newSheetName").value.trim();
+  const nameInput = document.getElementById("newSheetName");
+  const name = nameInput ? nameInput.value.trim() : "";
   if (!name) return alert("Nhập tên sheet cần tạo!");
   fetch(`${API_URL}?action=newSheet&name=${encodeURIComponent(name)}`)
     .then((res) => res.text())
@@ -208,10 +217,21 @@ function createNewSheet() {
       localStorage.removeItem("allReceivedCodes");
       matchedCodes.clear();
       localStorage.removeItem("matchedCodes");
+      
+      // Xoá dữ liệu so sánh sheet khi tạo sheet mới
+      sheetComparisonData = [];
+      localStorage.removeItem("comparisonData");
+      localStorage.removeItem("comparisonSheetName");
+      
+      const select = document.getElementById('sheetSelect');
+      if (select) select.value = "";
+      
       renderComparisonTable();
       
       const area = document.getElementById("unusualCodes");
       if (area) area.value = "";
+      
+      if (nameInput) nameInput.value = "";
       
       updateCurrentSheet();
     })
