@@ -166,19 +166,22 @@ function syncMatchedCodesWithWorkingSheet() {
     .then(r => r.json())
     .then(workingData => {
       if (Array.isArray(workingData)) {
+        // Lấy mã CHỈ từ sheet đang làm việc hiện tại (không dùng scannedCodes vì nó chứa mã từ sheet cũ)
         const existingCodes = new Set();
         workingData.forEach(row => {
           const code = String(row.code || row).trim();
           if (code) existingCodes.add(code);
         });
 
-        // Cập nhật allReceivedCodes
-        allReceivedCodes = new Set([...existingCodes, ...scannedCodes]);
+        // allReceivedCodes = dữ liệu thật từ sheet hiện tại + mã đang chờ gửi trong buffer
+        // KHÔNG dùng scannedCodes vì nó tích lũy mã từ nhiều sheet cũ
+        allReceivedCodes = new Set([...existingCodes, ...buffer]);
         localStorage.setItem("allReceivedCodes", JSON.stringify([...allReceivedCodes]));
 
-        // Cập nhật matchedCodes
+        // Reset matchedCodes và so khớp lại từ đầu
+        matchedCodes = new Set();
         sheetComparisonData.forEach(code => {
-          if (existingCodes.has(code) || scannedCodes.has(code)) {
+          if (existingCodes.has(code) || buffer.includes(code)) {
             matchedCodes.add(code);
           }
         });
@@ -485,6 +488,9 @@ function loadSheetData() {
   btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div> Đang tải...';
   loading.style.display = 'flex';
 
+  // Lưu tên sheet so sánh hiện tại vào localStorage để theo dõi
+  localStorage.setItem("comparisonSheetName", sheetName);
+
   // Fetch song song: dữ liệu sheet so sánh + dữ liệu sheet đang làm việc
   Promise.all([
     fetch(`${COMPARE_API_URL}?action=getSheetData&sheetName=${encodeURIComponent(sheetName)}`).then(r => r.json()),
@@ -495,7 +501,8 @@ function loadSheetData() {
         sheetComparisonData = compareData.map(item => String(item).trim()).filter(item => item !== '');
         matchedCodes = new Set();
 
-        // Lấy danh sách mã đã có trong sheet đang làm việc (API_URL)
+        // Lấy danh sách mã CHỈ từ sheet đang làm việc hiện tại (API_URL)
+        // KHÔNG dùng scannedCodes vì nó chứa mã từ tất cả sheet cũ
         const existingCodes = new Set();
         if (Array.isArray(workingData)) {
           workingData.forEach(row => {
@@ -504,15 +511,15 @@ function loadSheetData() {
           });
         }
 
-        // So khớp: mã nào trong sheet so sánh mà đã có trong sheet đang làm → đánh dấu đã nhận
+        // So khớp: CHỈ dùng dữ liệu thật từ sheet + mã đang chờ gửi trong buffer
         sheetComparisonData.forEach(code => {
-          if (existingCodes.has(code) || scannedCodes.has(code)) {
+          if (existingCodes.has(code) || buffer.includes(code)) {
             matchedCodes.add(code);
           }
         });
 
-        // Cập nhật và lưu allReceivedCodes
-        allReceivedCodes = new Set([...existingCodes, ...scannedCodes]);
+        // allReceivedCodes = CHỈ dữ liệu thật từ sheet hiện tại + buffer đang chờ
+        allReceivedCodes = new Set([...existingCodes, ...buffer]);
         localStorage.setItem("allReceivedCodes", JSON.stringify([...allReceivedCodes]));
 
         // Lưu vào localStorage
